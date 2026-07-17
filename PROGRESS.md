@@ -73,10 +73,14 @@ Una fila por producto vendido en el día (no una fila por venta individual), can
 
 - **Frontend/Backend**: Next.js 16 (App Router, TypeScript, Tailwind v4, ESLint), `src/` dir.
 - **Base de datos / auth / storage**: Supabase.
-- **Repo**: GitHub — https://github.com/panfranco18/panaderias.git (remoto `origin` conectado, aún sin push).
+- **Repo**: GitHub — https://github.com/panfranco18/panaderias.git (rama `main`, todo pusheado).
 - **Supabase**: proyecto "panfranco18's Project", ref `wlqgcritlefztwrprboe`. Credenciales en `.env.local` (no versionado).
-- **Deploy**: Vercel (pendiente, se prueba primero en localhost).
+- **Deploy**: **Netlify** (no Vercel — ver nota abajo) → https://panaderiap-772.netlify.app, sitio `panaderiap-772`, cuenta `panfranco18@outlook.com`. Variables de entorno cargadas (Supabase + Anthropic). Deploy manual vía `netlify deploy --prod --build` (no hay integración automática con GitHub todavía — cada cambio nuevo requiere correr ese comando de nuevo).
 - **Puerto local**: 5900 (`npm run dev`).
+
+### Nota sobre el deploy (2026-07-17)
+
+Se intentó deployar en **Vercel** primero, pero la cuenta que el usuario intentó crear (`panfranco18@outlook.com`) quedó bloqueada por la verificación de identidad de Vercel ("Your account requires further verification... complete the account recovery form"). Es un problema de la cuenta en Vercel, no del código — el usuario mandó el reclamo a `registration@vercel.com`. Mientras se resuelve, se desplegó en **Netlify** con la misma cuenta de email, que no tuvo ningún problema. Si en el futuro Vercel se destraba y se prefiere volver, el proyecto no tiene nada específico de Netlify que lo ate (es Next.js estándar) — se podría importar directo a Vercel desde el repo de GitHub.
 
 ## Estructura de carpetas
 
@@ -149,7 +153,7 @@ C:\panaderiap
   - **Precio en todas las sucursales**: cada tarjeta de producto en `/admin/productos` tiene ahora un campo de precio rápido + botón "Aplicar a todas" (`actualizarPrecioGlobal`) que actualiza `precio_base` **y borra los overrides** de `productos_precios_sucursal`, para que ninguna sucursal quede con un precio viejo por accidente.
   - **Venta por peso** (columna `unidad_medida` en `productos`, migración `supabase/003_unidad_medida.sql` ya corrida por el usuario): cada producto ahora se configura como "unidad", "kg", "gramo" o "docena". El precio se muestra como "$X/kg" y el carrito (POS "Vender", catálogo del sitio cliente, ticket) acepta cantidades fraccionarias (ej. 0.5 kg) y muestra la unidad correspondiente.
   - **Comanda para pedidos**: en `/admin/pedidos`, cada pedido con items tiene un botón "Imprimir comanda" (mismo mecanismo `window.print()` + `.no-print` que el ticket del POS) que imprime cliente, tipo (online/evento), items y notas — útil para encargos como tortas, sea que el pedido haya entrado por la web o se haya cargado a mano en el local.
-- [ ] Deploy en Vercel (cuando esté listo para salir de localhost).
+- [x] **Deploy en producción**: https://panaderiap-772.netlify.app (Netlify, no Vercel — ver nota en Stack técnico). Probado en producción: home con datos reales de Supabase, `/admin` redirige a login sin sesión, login funciona, dashboard y Productos cargan bien. Listo para mostrarle al cliente.
 
 ## ⚠️ Pendiente de seguridad antes de producción
 
@@ -157,11 +161,11 @@ El middleware exige sesión para entrar a `/admin/*`, el menú se filtra por rol
 1. Las Server Actions siguen usando la **service role key** para las escrituras en sí (una vez pasado el chequeo de rol) en vez de un cliente con RLS por sesión — funciona porque la autorización ahora se hace a mano en cada acción, pero sería más robusto en el tiempo migrar a RLS real (`src/lib/supabase/server.ts`) para no depender de que cada acción nueva recuerde llamar a `requireRol`.
 2. Falta migrar los uploads de Storage (imágenes de productos y facturas de proveedor) a políticas de Storage RLS — hoy también pasan por la service role key.
 
-No hace falta resolverlo para seguir probando en localhost con la cuenta superadmin, pero es bloqueante antes de deployar a Vercel con empleados reales.
+**Ya está deployado en producción** (https://panaderiap-772.netlify.app) para que el usuario le muestre el sistema al cliente — por ahora solo con la cuenta superadmin de prueba, sin empleados reales ni datos de clientes reales. Antes de que el cliente lo use de verdad con su personal, conviene resolver esto.
 
 ## Próximos pasos (siguiente sesión)
 
-1. Migrar las Server Actions del panel admin de la service role key a RLS real, y los uploads de Storage a políticas RLS (ver sección de seguridad) — no bloqueante para localhost, sí antes de Vercel.
-2. Sitio cliente: agregar página/confirmación con seguimiento del pedido para el cliente (hoy solo ve "pedido recibido", sin poder consultarlo después).
-3. Deploy a Vercel cuando el resto esté cerrado.
+1. Migrar las Server Actions del panel admin de la service role key a RLS real, y los uploads de Storage a políticas RLS (ver sección de seguridad) — más urgente ahora que hay una URL pública en producción.
+2. Conectar Netlify al repo de GitHub para deploy automático en cada push (hoy es manual con `netlify deploy --prod --build`), o retomar Vercel si el usuario destraba la cuenta.
+3. Sitio cliente: agregar página/confirmación con seguimiento del pedido para el cliente (hoy solo ve "pedido recibido", sin poder consultarlo después).
 4. (Opcional, solo si el usuario cambia de opinión) Cargar crédito en Anthropic y reactivar "Cargar planilla" en `/admin/caja` — el código ya está listo, ver arriba.
