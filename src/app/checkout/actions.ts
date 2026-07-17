@@ -15,6 +15,11 @@ export type CheckoutInput = {
   sucursalId?: string | null;
   notas?: string;
   items: CheckoutItem[];
+  tipoEntrega: "retiro" | "envio";
+  direccionEntrega?: string;
+  horaRetiro?: string;
+  metodoPago: string;
+  costoEnvio?: number;
 };
 
 export type CheckoutResult = { ok?: boolean; error?: string };
@@ -25,13 +30,16 @@ export async function crearPedidoOnline(
   const nombre = input.clienteNombre.trim();
   if (!nombre) return { error: "Falta el nombre" };
   if (!input.items?.length) return { error: "El carrito está vacío" };
+  if (input.tipoEntrega === "envio" && !input.direccionEntrega?.trim()) {
+    return { error: "Falta la dirección de envío" };
+  }
 
   const supabase = await createClient();
   const pedidoId = crypto.randomUUID();
-  const total = input.items.reduce(
-    (acc, it) => acc + it.cantidad * it.precioUnitario,
-    0
-  );
+  const costoEnvio = input.tipoEntrega === "envio" ? input.costoEnvio ?? 0 : 0;
+  const total =
+    input.items.reduce((acc, it) => acc + it.cantidad * it.precioUnitario, 0) +
+    costoEnvio;
 
   const { error: pedidoError } = await supabase.from("pedidos").insert({
     id: pedidoId,
@@ -43,6 +51,12 @@ export async function crearPedidoOnline(
     estado: "pendiente",
     notas: input.notas?.trim() || null,
     total,
+    tipo_entrega: input.tipoEntrega,
+    direccion_entrega:
+      input.tipoEntrega === "envio" ? input.direccionEntrega?.trim() : null,
+    hora_retiro: input.horaRetiro || null,
+    metodo_pago: input.metodoPago,
+    costo_envio: costoEnvio,
   });
 
   if (pedidoError) return { error: pedidoError.message };

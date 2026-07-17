@@ -58,6 +58,31 @@ export function NuevaSucursalForm() {
             placeholder="Calle 123, Ciudad"
           />
         </div>
+        <div>
+          <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            Horario de atención
+          </label>
+          <textarea
+            name="horario_atencion"
+            rows={2}
+            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+            placeholder="Ej: Lunes a viernes 8 a 20 hs, sábados 8 a 13 hs"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            Costo de envío a domicilio
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            name="costo_envio"
+            defaultValue="0"
+            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+            placeholder="0.00"
+          />
+        </div>
       </div>
 
       {state.error && (

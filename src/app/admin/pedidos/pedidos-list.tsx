@@ -24,6 +24,11 @@ type Pedido = {
   total: number;
   fecha_evento: string | null;
   created_at: string;
+  tipo_entrega?: string;
+  direccion_entrega?: string | null;
+  hora_retiro?: string | null;
+  metodo_pago?: string | null;
+  costo_envio?: number;
 };
 
 type Item = {
@@ -162,6 +167,14 @@ function PedidoCard({
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             {[pedido.cliente_telefono, sucursalNombre].filter(Boolean).join(" · ")}
             {pedido.fecha_evento ? ` · Evento: ${pedido.fecha_evento}` : ""}
+          </p>
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+            {pedido.tipo_entrega === "envio"
+              ? `Envío a: ${pedido.direccion_entrega || "(sin dirección)"}`
+              : pedido.hora_retiro
+                ? `Retira a las ${pedido.hora_retiro}`
+                : "Retiro en sucursal"}
+            {pedido.metodo_pago ? ` · Pago: ${pedido.metodo_pago}` : ""}
           </p>
           {pedido.notas && (
             <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">

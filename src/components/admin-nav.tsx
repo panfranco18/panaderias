@@ -13,6 +13,7 @@ import {
   IconClipboardList,
   IconReceipt,
   IconChart,
+  IconSettings,
 } from "@/components/admin-icons";
 
 const items = [
@@ -26,6 +27,7 @@ const items = [
   { href: "/admin/caja", label: "Caja", icon: IconCash, exact: false, modulo: "caja" },
   { href: "/admin/facturacion", label: "Facturación", icon: IconReceipt, exact: false, modulo: "facturacion" },
   { href: "/admin/reportes", label: "Reportes", icon: IconChart, exact: false, modulo: "reportes" },
+  { href: "/admin/configuracion", label: "Configuración", icon: IconSettings, exact: false, modulo: "configuracion" },
 ] as const;
 
 export function AdminNav({

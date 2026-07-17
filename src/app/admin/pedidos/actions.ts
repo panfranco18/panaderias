@@ -22,6 +22,11 @@ export async function crearPedido(
   const tipo = String(formData.get("tipo") || "online");
   const notas = String(formData.get("notas") || "").trim() || null;
   const fechaEvento = String(formData.get("fecha_evento") || "") || null;
+  const tipoEntrega = String(formData.get("tipo_entrega") || "retiro");
+  const direccionEntrega = String(formData.get("direccion_entrega") || "").trim() || null;
+  const horaRetiro = String(formData.get("hora_retiro") || "").trim() || null;
+  const metodoPago = String(formData.get("metodo_pago") || "").trim() || null;
+  const costoEnvio = Number(formData.get("costo_envio") || 0);
 
   if (!clienteNombre) return { error: "El nombre del cliente es obligatorio" };
 
@@ -34,6 +39,12 @@ export async function crearPedido(
     tipo,
     notas,
     fecha_evento: fechaEvento,
+    tipo_entrega: tipoEntrega,
+    direccion_entrega: tipoEntrega === "envio" ? direccionEntrega : null,
+    hora_retiro: horaRetiro,
+    metodo_pago: metodoPago,
+    costo_envio: tipoEntrega === "envio" ? costoEnvio : 0,
+    total: tipoEntrega === "envio" ? costoEnvio : 0,
   });
 
   if (error) return { error: error.message };
@@ -83,10 +94,17 @@ async function recalcularTotal(
     .select("cantidad, precio_unitario")
     .eq("pedido_id", pedidoId);
 
-  const total = (items ?? []).reduce(
+  const { data: pedido } = await supabase
+    .from("pedidos")
+    .select("costo_envio")
+    .eq("id", pedidoId)
+    .single();
+
+  const totalItems = (items ?? []).reduce(
     (acc, it) => acc + Number(it.cantidad) * Number(it.precio_unitario),
     0
   );
+  const total = totalItems + Number(pedido?.costo_envio ?? 0);
 
   await supabase.from("pedidos").update({ total }).eq("id", pedidoId);
 }
