@@ -11,6 +11,24 @@ Sistema para una panadería con múltiples sucursales, propiedad de un solo due�
 
 Si sale la venta del sistema, se le pone el nombre real de la panadería (por ahora el repo/carpeta se llama `panaderiap`).
 
+## Formato de planilla de ventas en papel (propuesto 2026-07-14)
+
+Mientras no se defina el formato real que usan en las sucursales, se adopta este por defecto — se puede ajustar cuando el usuario cuente cómo anotan hoy:
+
+```
+PLANILLA DE VENTAS — [fecha] — Sucursal: __________
+
+PRODUCTO              CANTIDAD    PRECIO UNIT.
+------------------------------------------------
+Medialuna                12          700
+Pan francés               3         1500
+...
+
+TOTAL DEL DÍA: ______________
+```
+
+Una fila por producto vendido en el día (no una fila por venta individual), cantidad total y precio unitario de ese producto. Foto de esta planilla → se sube en el panel → un modelo con visión (Claude) extrae las filas → el encargado revisa/corrige antes de confirmar → se crea una venta con esos items (`origen = 'escaneo'`), igual que el POS.
+
 ## Funcionalidad esperada
 
 ### Sitio cliente
@@ -29,11 +47,34 @@ Si sale la venta del sistema, se le pone el nombre real de la panadería (por ah
   3. Guarda cada venta en la tabla correspondiente.
   - **Pendiente de definir con el usuario**: el formato exacto de la planilla en papel (columnas: producto, cantidad, precio, hora, etc.) antes de poder diseñar el parser de OCR.
 
+### Detalle del panel admin por módulo (pedido 2026-07-14)
+
+1. **Productos**: alta/edición con imagen subida desde la PC (facturas, tortas, sandwiches, panes, etc.), precio base y precio override por sucursal (una sucursal puede cobrar distinto que otra).
+2. **Sucursales**: ícono propio en el menú. Formulario: nombre, teléfono, dirección. Cada sucursal tiene un desplegable que muestra los empleados asignados a ella.
+3. **Personal**: ícono propio en el menú. Alta de empleados por sucursal, con cargo y nivel de acceso al panel admin (qué puede ver/hacer cada uno). Solo el superadmin asigna niveles de acceso.
+4. **Superadmin** (dueño): además de todo lo anterior, controla:
+   - Stock (carga y control de stock por sucursal/producto).
+   - Proveedores (alta de proveedores).
+   - Facturas de proveedores (carga de comprobantes de compra).
+   - Asignación de nivel de acceso al panel para cada empleado.
+5. **Registro de ingreso de personal**: fichaje/registro de entrada de empleados por sucursal.
+6. **Pedidos**:
+   - Solicitud de pedidos (para el sitio cliente: pedidos online, compras en la página, carrito de compras).
+   - Consultas sobre pedidos para fiestas/eventos (formulario de consulta, no venta directa).
+7. **Caja y facturación**:
+   - Control de caja por sucursal.
+   - Facturación diaria.
+   - Ingresos por sucursal (reporte).
+   - Carga manual de ventas (sistema de caja) **o** escaneo de planilla en papel (OCR) — mismo mecanismo descripto arriba.
+
+**Roles previstos**: `superadmin` (dueño, acceso total), `encargado_sucursal` (gestiona su sucursal: stock, caja, personal de esa sucursal), `empleado` (acceso acotado según nivel asignado — ej. solo carga de ventas/caja). El nivel exacto de cada rol se ajusta con permisos granulares por módulo, asignados desde el panel de Personal.
+
 ## Stack técnico
 
 - **Frontend/Backend**: Next.js 16 (App Router, TypeScript, Tailwind v4, ESLint), `src/` dir.
 - **Base de datos / auth / storage**: Supabase.
-- **Repo**: GitHub (pendiente de crear).
+- **Repo**: GitHub — https://github.com/panfranco18/panaderias.git (remoto `origin` conectado, aún sin push).
+- **Supabase**: proyecto "panfranco18's Project", ref `wlqgcritlefztwrprboe`. Credenciales en `.env.local` (no versionado).
 - **Deploy**: Vercel (pendiente, se prueba primero en localhost).
 - **Puerto local**: 5900 (`npm run dev`).
 
@@ -67,21 +108,60 @@ C:\panaderiap
 - [x] Clientes de Supabase (browser + server) creados en `src/lib/supabase`.
 - [x] Puerto fijo 5900 configurado en `npm run dev`.
 - [x] Estructura de carpetas para admin (sucursales, ventas, facturación, productos) creada.
-- [ ] Proyecto Supabase creado (falta URL + anon key + service role key en `.env.local`).
-- [ ] Esquema SQL: sucursales, productos, ventas, facturas, usuarios/roles.
-- [ ] Definir formato de planilla en papel para el escaneo de ventas.
-- [ ] Auth (roles: dueño vs encargado de sucursal).
-- [ ] Sitio cliente: catálogo + carrito + checkout.
-- [ ] Panel admin: CRUD sucursales/productos.
-- [ ] Panel admin: carga de ventas (manual + escaneo/OCR).
-- [ ] Panel admin: facturación.
-- [ ] Panel admin: dashboard "control en vivo" por sucursal.
-- [ ] Repo en GitHub.
+- [x] Proyecto Supabase creado y credenciales cargadas en `.env.local` (URL + anon key + service role key), verificado con curl (auth health 200, REST schema OK).
+- [x] Repo GitHub creado por el usuario y conectado como `origin`; primer push hecho a `main` (autenticado con cuenta `panfranco18` vía `gh auth login`, ver `CLAUDE.md`).
+- [x] Home del sitio cliente armada (`src/app/page.tsx`) usando el hero provisto por el usuario (`public/heropana.png`, 1717×916): imagen a pantalla completa con enlaces reales superpuestos (botón "Conocé nuestros productos" y las 4 categorías del pie del hero, todos apuntando a `#productos`), fuente Playfair Display para títulos, y dos secciones nuevas reutilizando el formato ícono+texto del hero: "Por qué elegirnos" (ingredientes naturales, horneado diario, recetas tradicionales) y "Nuestros productos" (panes, facturas y dulces, tortas, pedí y retirá) con íconos SVG propios en `src/components/icons.tsx`.
+- [x] Esquema SQL completo (`supabase/001_schema.sql`): sucursales, perfiles (empleados+roles), productos, productos_precios_sucursal, proveedores, facturas_proveedor, stock, movimientos_stock, ventas, items_venta, facturas_venta, caja_movimientos, registro_ingreso_personal, pedidos, pedidos_items — con RLS y función helper `rol_actual()`. Verificado aplicado y en funcionamiento en Supabase vía REST.
+- [x] Bucket de Storage público `productos` creado para imágenes subidas desde la PC.
+- [x] Layout del panel admin rediseñado: sidebar con íconos (Inicio, Productos, Sucursales, Personal, Proveedores, Stock, Pedidos, Caja, Facturación). Módulos sin construir muestran "Próximamente".
+- [x] Módulo **Sucursales** funcional: alta (nombre/teléfono/dirección), edición inline, baja, y desplegable que muestra los empleados asignados a cada sucursal (`src/app/admin/sucursales/`).
+- [x] Módulo **Personal** funcional: alta de empleados que crea un usuario real en Supabase Auth (email + contraseña temporal generada y mostrada una sola vez) + su perfil (cargo, rol, sucursal, nivel de acceso por módulo vía checkboxes), edición y baja (`src/app/admin/personal/`). Probado de punta a punta.
+- [x] Módulo **Productos** funcional: alta con nombre, categoría (Panes/Facturas/Tortas/Sandwiches/Dulces/Otros), descripción, precio base e imagen subida desde la PC al bucket `productos` de Supabase Storage; edición, baja, y panel desplegable "Precios por sucursal" para poner un precio distinto por sucursal (si se deja vacío, usa el precio base) (`src/app/admin/productos/`). Probado de punta a punta, incluida subida de imagen y override de precio.
+- [x] `next.config.ts`: dominio de Supabase Storage habilitado en `images.remotePatterns` para que `next/image` muestre las fotos de productos.
+- [x] Login real con Supabase Auth (`src/app/login/page.tsx`, `signInWithPassword`) + `src/middleware.ts` que exige sesión válida en cualquier `/admin/*` y redirige a `/login` si no la hay. Botón de cerrar sesión en el sidebar (`src/components/logout-button.tsx`). El menú lateral ahora se arma según el `rol`/`nivel_acceso` real del perfil logueado (superadmin ve todo, el resto solo los módulos habilitados). Probado de punta a punta: bloqueo sin sesión, login, logout.
+- [x] **Cuenta superadmin (dueño) creada** para pruebas: email `dueno@panaderiap.local`, contraseña temporal `Panaderiaud4725ta!A1` (cambiarla o reemplazar por la cuenta real del cliente cuando se concrete la venta).
+- [x] Módulo **Proveedores** funcional: alta/edición/baja de proveedores (nombre, teléfono, contacto, notas) + carga de facturas de compra (proveedor, sucursal, número, monto, fecha, foto del comprobante) en bucket privado `facturas-proveedores` con URLs firmadas de 1 hora para verlas (`src/app/admin/proveedores/`). Probado de punta a punta.
+- [x] Módulo **Stock** funcional: selector de sucursal, listado de productos con cantidad actual, y formulario por producto para registrar movimientos (ingreso suma, egreso resta sin bajar de 0, ajuste fija la cantidad); cada movimiento queda en `movimientos_stock` con el usuario que lo hizo (`src/app/admin/stock/`). Probado de punta a punta (ingreso y egreso).
+- [x] Módulo **Pedidos** funcional: alta manual de pedidos (cliente, tipo online/evento, sucursal, fecha de evento, notas), cambio de estado (pendiente → confirmado → preparando → listo → entregado/cancelado) con auto-guardado al cambiar el select, y carga de items (producto + cantidad) que calculan el total automáticamente usando el precio por sucursal si existe, si no el precio base (`src/app/admin/pedidos/`). Probado de punta a punta.
+- [x] Módulo **Caja** funcional: selector de sucursal + fecha, registro de movimientos (apertura/ingreso/egreso/cierre) con resumen de totales y saldo calculado (apertura + ingresos − egresos), historial del día con quién lo cargó (`src/app/admin/caja/`). Probado de punta a punta.
+- [x] **Sitio cliente: catálogo real + carrito + checkout**. La home (`src/app/page.tsx`) ahora trae productos/precios/sucursales reales de Supabase y los renderiza con `src/components/catalogo.tsx` (agrupados por categoría, con selector de sucursal de retiro que ajusta el precio si hay override). Carrito persistente en `localStorage` vía `src/lib/cart-context.tsx` (Context API), con un widget flotante (`src/components/cart-widget.tsx`, oculto en `/admin` y `/login`). El checkout (`/checkout`) crea el pedido real en `pedidos`/`pedidos_items` usando las políticas RLS públicas ya definidas en el esquema (`pedidos_insert_publico`) — **sin necesidad de service role key**, o sea que ya respeta RLS de verdad a diferencia del panel admin. Probado de punta a punta: agregar al carrito, checkout, y el pedido aparece correctamente en el panel admin de Pedidos.
+  - **Bug encontrado y arreglado**: condición de carrera en `cart-context.tsx` — el efecto que hidrata el carrito desde `localStorage` corría *después* del efecto que fija la sucursal por defecto y la pisaba con `null` en la primera visita (localStorage vacío), haciendo que el pedido se guardara sin sucursal. Se corrigió para que la hidratación solo sobreescriba `sucursalId`/`items` si realmente hay algo guardado.
+- [x] **Autorización real por rol en el panel admin**. Nuevo helper `src/lib/auth/current-perfil.ts` (`getPerfilActual`, `requireRol`, `requireRolEnSucursal`) que lee la sesión real + el perfil de `perfiles` y bloquea la acción si el rol no alcanza. Aplicado a **todas** las Server Actions de sucursales (superadmin), personal (superadmin), productos (superadmin/encargado), proveedores (superadmin), stock y caja (superadmin/encargado/empleado, acotado a su propia sucursal salvo superadmin) y pedidos (todo el staff). Antes, cualquier usuario logueado —sin importar su rol— podía ejecutar cualquier acción con tal de tener sesión; ahora el servidor la rechaza con "No tenés permiso para hacer esta acción." Probado de punta a punta creando un empleado sin ningún nivel de acceso: el menú le queda vacío y, si igual entra directo a una URL restringida (ej. `/admin/proveedores`) e intenta crear algo, el servidor lo bloquea.
+- [x] **Errores visibles en los botones "Eliminar"**. Nuevo componente `src/components/delete-button.tsx` (usa `useActionState`) reemplaza los formularios "fire and forget" en sucursales, personal, productos, proveedores, facturas de proveedor, pedidos, items de pedido y movimientos de caja. Probado forzando un error real (borrar una sucursal con un movimiento de caja asociado): ahora se ve el mensaje de Postgres en pantalla en vez de fallar en silencio.
+- [x] Módulo **Facturación diaria** funcional (`src/app/admin/facturacion/`): selector de sucursal+fecha, alta de factura (número, CUIT, método de pago, monto) que además crea automáticamente la venta asociada en la tabla `ventas` (para alimentar el dashboard), total facturado del día, y baja que borra factura + venta juntas. Probado de punta a punta.
+- [x] **Dashboard de control en vivo** en la home del panel (`src/app/admin/page.tsx`): tarjeta por sucursal con ventas de hoy, saldo de caja calculado y pedidos pendientes, más el total general de todas las sucursales. Si el que mira no es superadmin, solo ve su propia sucursal. Probado con datos en dos sucursales distintas, los totales agregaron correctamente.
+- [x] **Punto de venta (POS) en Caja** — pedido del usuario 2026-07-14: "una caja donde cobrar, con ticket, comanda, escaneo desde el celular". Botón "Vender" en `/admin/caja` lleva a `/admin/caja/vender` (`src/app/admin/caja/vender/`):
+  - Buscador de productos + carrito editable (cantidad por ítem, precio según sucursal), método de pago, botón "Cobrar".
+  - Server Action `crearVenta` crea en una sola operación: `ventas`, `items_venta` y un movimiento de caja tipo `ingreso` (así el dashboard y el saldo de caja quedan al día automáticamente). Con la misma autorización por rol/sucursal que el resto del panel.
+  - **Ticket y comanda imprimibles** (`ticket-view.tsx`): tras cobrar, se puede imprimir un ticket (con precios) o una comanda (solo cantidades y productos, sin precios) usando `window.print()` del navegador — no hay integración con impresoras térmicas ESC/POS directamente, imprime a cualquier impresora que tengas configurada en Windows. El sidebar del panel se oculta al imprimir (clase `.no-print`).
+  - **Escaneo de código de barras desde el celular** (`barcode-scanner.tsx`, librería `html5-qrcode`): botón "Escanear código" abre la cámara del dispositivo (funciona igual si abrís el panel desde el celular) y agrega automáticamente el producto al carrito según su código de barras. Requiere que el producto tenga cargado un código de barras.
+  - **Código de barras en Productos**: nuevo campo opcional en el alta/edición de productos. Requiere la columna `codigo_barras` en la tabla `productos`, que **todavía no se aplicó** (ver `supabase/002_codigo_barras.sql` — el usuario prefirió seguir pasando el SQL manualmente en vez de darme la contraseña de la base). Mientras tanto, todo el código tiene un *fallback* automático que detecta si la columna no existe y sigue funcionando sin ella (sin el campo de código de barras, sin poder escanear).
+  - Probado de punta a punta: alta de venta con 2 productos, ticket generado con los datos correctos, venta + items + movimiento de caja confirmados en la base, y reflejados en el dashboard de control en vivo.
+- [x] Migración `supabase/002_codigo_barras.sql` corrida por el usuario en Supabase — columna `codigo_barras` confirmada. Código de barras y escaneo del POS ya operan sin fallback.
+- [x] **Carga de ventas por escaneo de planilla en papel** (`/admin/caja/planilla`) — construida y probada de punta a punta, pero **desactivada por decisión del usuario** (2026-07-14: "no voy a cargar crédito"). El código sigue completo:
+  - Formato de planilla propuesto (ver sección arriba), foto → `src/app/admin/caja/planilla/actions.ts` la sube al bucket privado `planillas-ventas` y se la manda a Claude (visión, `@anthropic-ai/sdk`) pidiendo JSON `[{producto, cantidad, precioUnitario}]` → `planilla-uploader.tsx` hace auto-match contra `productos` y muestra una tabla editable para revisar antes de confirmar → `confirmarPlanilla` crea `ventas` (`origen = 'escaneo'`) + `items_venta` + ingreso en `caja_movimientos`, igual que el POS.
+  - Probado con una key real de Anthropic: la subida de imagen y el manejo de errores funcionan perfecto; el único bloqueo fue que la cuenta de Anthropic no tenía crédito cargado (`"Your credit balance is too low"`). El usuario decidió no cargar crédito, así que **se sacó el botón "Cargar planilla" de la vista** (`src/app/admin/caja/page.tsx`) para no dejar una función rota a la vista. La key quedó en `.env.local` sin usarse — no genera ningún cargo mientras no haya crédito ni se use.
+  - Para reactivarlo en el futuro: cargar crédito en console.anthropic.com y volver a agregar el `<Link>` a `/admin/caja/planilla` en `caja/page.tsx` (una línea).
+  - Sin esto, la carga de ventas en sucursal se sigue haciendo por el POS ("Vender") a mano, que no tiene costo de API.
+- [x] **"Sistema de caja" ampliado** — pedido del usuario 2026-07-16 (estadísticas, quién está trabajando, precio en todas las sucursales, venta por peso, comanda para pedidos). Todo probado de punta a punta:
+  - **Fichaje de personal** (`src/app/admin/fichaje/actions.ts`, `src/components/fichaje-widget.tsx`): cualquier empleado/encargado con sucursal asignada ve un botón "Marcar entrada"/"Marcar salida" en el sidebar, que escribe en `registro_ingreso_personal`. El **dashboard** (`/admin`) ahora muestra una tarjeta "Personal presente" por sucursal con quién está fichado en este momento.
+  - **Reportes** (`/admin/reportes`, nuevo ítem de menú y en `MODULOS_ACCESO`): selector de sucursal + período (hoy / últimos 7 días / últimos 30 días) con total vendido, cantidad de ventas, ticket promedio, y ranking de productos más vendidos (cantidad y monto), calculado sobre `ventas`/`items_venta`.
+  - **Precio en todas las sucursales**: cada tarjeta de producto en `/admin/productos` tiene ahora un campo de precio rápido + botón "Aplicar a todas" (`actualizarPrecioGlobal`) que actualiza `precio_base` **y borra los overrides** de `productos_precios_sucursal`, para que ninguna sucursal quede con un precio viejo por accidente.
+  - **Venta por peso** (columna `unidad_medida` en `productos`, migración `supabase/003_unidad_medida.sql` ya corrida por el usuario): cada producto ahora se configura como "unidad", "kg", "gramo" o "docena". El precio se muestra como "$X/kg" y el carrito (POS "Vender", catálogo del sitio cliente, ticket) acepta cantidades fraccionarias (ej. 0.5 kg) y muestra la unidad correspondiente.
+  - **Comanda para pedidos**: en `/admin/pedidos`, cada pedido con items tiene un botón "Imprimir comanda" (mismo mecanismo `window.print()` + `.no-print` que el ticket del POS) que imprime cliente, tipo (online/evento), items y notas — útil para encargos como tortas, sea que el pedido haya entrado por la web o se haya cargado a mano en el local.
 - [ ] Deploy en Vercel (cuando esté listo para salir de localhost).
+
+## ⚠️ Pendiente de seguridad antes de producción
+
+El middleware exige sesión para entrar a `/admin/*`, el menú se filtra por rol/nivel de acceso, y ahora **las Server Actions también verifican el rol real contra `perfiles` antes de escribir nada** (ver arriba). Sigue pendiente, ya con menor urgencia:
+1. Las Server Actions siguen usando la **service role key** para las escrituras en sí (una vez pasado el chequeo de rol) en vez de un cliente con RLS por sesión — funciona porque la autorización ahora se hace a mano en cada acción, pero sería más robusto en el tiempo migrar a RLS real (`src/lib/supabase/server.ts`) para no depender de que cada acción nueva recuerde llamar a `requireRol`.
+2. Falta migrar los uploads de Storage (imágenes de productos y facturas de proveedor) a políticas de Storage RLS — hoy también pasan por la service role key.
+
+No hace falta resolverlo para seguir probando en localhost con la cuenta superadmin, pero es bloqueante antes de deployar a Vercel con empleados reales.
 
 ## Próximos pasos (siguiente sesión)
 
-1. Crear proyecto en Supabase y cargar credenciales en `.env.local`.
-2. Diseñar el esquema de base de datos (sucursales, productos, ventas, items_venta, facturas, usuarios).
-3. Definir con el usuario el formato de la planilla de ventas en papel antes de encarar el OCR.
-4. Armar auth básico con roles (dueño / encargado de sucursal).
+1. Migrar las Server Actions del panel admin de la service role key a RLS real, y los uploads de Storage a políticas RLS (ver sección de seguridad) — no bloqueante para localhost, sí antes de Vercel.
+2. Sitio cliente: agregar página/confirmación con seguimiento del pedido para el cliente (hoy solo ve "pedido recibido", sin poder consultarlo después).
+3. Deploy a Vercel cuando el resto esté cerrado.
+4. (Opcional, solo si el usuario cambia de opinión) Cargar crédito en Anthropic y reactivar "Cargar planilla" en `/admin/caja` — el código ya está listo, ver arriba.
