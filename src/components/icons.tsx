@@ -107,6 +107,88 @@ export function IconCake({ className }: { className?: string }) {
   );
 }
 
+export function IconSandwich({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className}>
+      <path
+        d="M6 20l18-12 18 12H6z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 20h32l-2 8H10l-2-8z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 28l3 10h24l3-10"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path d="M13 20v8M24 20v8M35 20v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconCandy({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className}>
+      <path
+        d="M18 24a6 6 0 1 1 12 0 6 6 0 0 1-12 0z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M18 21 6 14v6l8 4-8 4v6l12-7M30 21l12-7v6l-8 4 8 4v6l-12-7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function IconTongs({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className}>
+      <path
+        d="M18 6 10 30a6 6 0 0 0 8 7l4-14"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M30 6l8 24a6 6 0 0 1-8 7l-4-14"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M18 6c2 3 2 6 0 9M30 6c-2 3-2 6 0 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconBasket({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className}>
+      <path
+        d="M8 20h32l-3.5 18a3 3 0 0 1-3 2.5H14.5a3 3 0 0 1-3-2.5L8 20z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path d="M4 20h40" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M16 20 22 6M32 20 26 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M14 25v13M24 25v13M34 25v13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+    </svg>
+  );
+}
+
 export function IconTruck({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 48 48" fill="none" className={className}>

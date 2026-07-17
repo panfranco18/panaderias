@@ -15,6 +15,7 @@ export type CartItem = {
   precioUnitario: number;
   cantidad: number;
   unidadMedida?: string;
+  categoria?: string;
 };
 
 type CartContextValue = {
