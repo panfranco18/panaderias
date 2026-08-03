@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SucursalSelector } from "./sucursal-selector";
-import { StockTabla } from "./stock-tabla";
+import { StockCategorias } from "./stock-categorias";
 
 export default async function StockPage({
   searchParams,
@@ -51,7 +51,7 @@ export default async function StockPage({
         </p>
       ) : (
         <div className="mt-6">
-          <StockTabla
+          <StockCategorias
             productos={productos}
             stock={stockRows ?? []}
             sucursalId={sucursalId!}

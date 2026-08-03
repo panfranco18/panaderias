@@ -80,6 +80,70 @@ export async function crearEmpleado(
   return { ok: true, passwordTemporal: password };
 }
 
+export async function darAccesoAEmpleado(
+  empleadoId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const auth = await requireRol(["superadmin"]);
+  if ("error" in auth) return auth;
+
+  const email = String(formData.get("email") || "").trim();
+  const cargo = String(formData.get("cargo") || "").trim() || null;
+  const rol = String(formData.get("rol") || "empleado");
+  const sucursalId = String(formData.get("sucursal_id") || "") || null;
+
+  if (!email) return { error: "El email es obligatorio (se usa para el login)" };
+
+  const supabase = createAdminClient();
+
+  const { data: yaTieneAcceso } = await supabase
+    .from("perfiles")
+    .select("id")
+    .eq("empleado_id", empleadoId)
+    .maybeSingle();
+  if (yaTieneAcceso) return { error: "Este empleado ya tiene acceso al panel." };
+
+  const { data: empleado, error: empleadoError } = await supabase
+    .from("empleados")
+    .select("nombre, apellido")
+    .eq("id", empleadoId)
+    .single();
+  if (empleadoError || !empleado) return { error: "No se encontró el empleado." };
+
+  const nombreCompleto = [empleado.nombre, empleado.apellido].filter(Boolean).join(" ");
+  const password = generarPassword();
+
+  const { data: userData, error: authError } =
+    await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+
+  if (authError) return { error: authError.message };
+
+  const { error: perfilError } = await supabase.from("perfiles").insert({
+    id: userData.user.id,
+    nombre: nombreCompleto,
+    cargo,
+    rol,
+    sucursal_id: sucursalId,
+    empleado_id: empleadoId,
+    nivel_acceso: nivelAccesoDesdeForm(formData),
+  });
+
+  if (perfilError) {
+    await supabase.auth.admin.deleteUser(userData.user.id);
+    return { error: perfilError.message };
+  }
+
+  revalidatePath("/admin/personal");
+  revalidatePath("/admin/sucursales");
+  revalidatePath("/admin/empleados");
+  return { ok: true, passwordTemporal: password };
+}
+
 export async function actualizarEmpleado(
   id: string,
   _prevState: ActionState,

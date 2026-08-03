@@ -8,8 +8,9 @@ import {
 } from "./actions";
 import { MODULOS_ACCESO } from "./modulos";
 import { DeleteButton } from "@/components/delete-button";
+import { DarAccesoForm } from "./dar-acceso-form";
 
-type Empleado = {
+type Perfil = {
   id: string;
   nombre: string;
   cargo: string | null;
@@ -17,6 +18,13 @@ type Empleado = {
   sucursal_id: string | null;
   nivel_acceso: Record<string, boolean> | null;
   activo: boolean;
+  empleado_id: string | null;
+};
+
+type EmpleadoRoster = {
+  id: string;
+  nombre: string;
+  apellido: string | null;
 };
 
 const initialState: ActionState = {};
@@ -28,33 +36,120 @@ const ROL_LABEL: Record<string, string> = {
 };
 
 export function PersonalList({
-  empleados,
+  perfiles,
+  empleadosRoster,
   sucursales,
 }: {
-  empleados: Empleado[];
+  perfiles: Perfil[];
+  empleadosRoster: EmpleadoRoster[];
   sucursales: { id: string; nombre: string }[];
 }) {
-  if (empleados.length === 0) {
-    return (
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        Todavía no hay empleados cargados.
-      </p>
-    );
-  }
-
   const sucursalNombre = (id: string | null) =>
     sucursales.find((s) => s.id === id)?.nombre ?? "Sin asignar";
 
+  const perfilesHuerfanos = perfiles.filter(
+    (p) => !p.empleado_id || !empleadosRoster.some((e) => e.id === p.empleado_id)
+  );
+
   return (
-    <div className="flex flex-col gap-3">
-      {empleados.map((e) => (
-        <EmpleadoCard
-          key={e.id}
-          empleado={e}
-          sucursales={sucursales}
-          sucursalNombre={sucursalNombre(e.sucursal_id)}
-        />
-      ))}
+    <div className="flex flex-col gap-6">
+      <div>
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          Empleados (legajo)
+        </h3>
+        {empleadosRoster.length === 0 ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Todavía no hay empleados cargados en{" "}
+            <span className="font-medium">Empleados</span>.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {empleadosRoster.map((emp) => (
+              <RosterCard
+                key={emp.id}
+                empleado={emp}
+                perfil={perfiles.find((p) => p.empleado_id === emp.id) ?? null}
+                sucursales={sucursales}
+                sucursalNombreFn={sucursalNombre}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {perfilesHuerfanos.length > 0 && (
+        <div>
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Otras cuentas (sin vincular a un empleado del legajo)
+          </h3>
+          <div className="flex flex-col gap-3">
+            {perfilesHuerfanos.map((p) => (
+              <EmpleadoCard
+                key={p.id}
+                empleado={p}
+                sucursales={sucursales}
+                sucursalNombre={sucursalNombre(p.sucursal_id)}
+                deleteLabel="Eliminar cuenta"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RosterCard({
+  empleado,
+  perfil,
+  sucursales,
+  sucursalNombreFn,
+}: {
+  empleado: EmpleadoRoster;
+  perfil: Perfil | null;
+  sucursales: { id: string; nombre: string }[];
+  sucursalNombreFn: (id: string | null) => string;
+}) {
+  const [abierto, setAbierto] = useState(false);
+  const nombreCompleto = [empleado.nombre, empleado.apellido]
+    .filter(Boolean)
+    .join(" ");
+
+  if (perfil) {
+    return (
+      <EmpleadoCard
+        empleado={perfil}
+        sucursales={sucursales}
+        sucursalNombre={sucursalNombreFn(perfil.sucursal_id)}
+        nombreOverride={nombreCompleto}
+        deleteLabel="Quitar acceso"
+      />
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-center justify-between gap-4 p-4">
+        <div>
+          <p className="font-semibold text-zinc-900 dark:text-zinc-50">
+            {nombreCompleto}
+          </p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Sin acceso al panel
+          </p>
+        </div>
+        <button
+          onClick={() => setAbierto((v) => !v)}
+          className="rounded-md px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950"
+        >
+          {abierto ? "Cancelar" : "Dar acceso"}
+        </button>
+      </div>
+      {abierto && (
+        <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
+          <DarAccesoForm empleadoId={empleado.id} sucursales={sucursales} />
+        </div>
+      )}
     </div>
   );
 }
@@ -63,10 +158,14 @@ function EmpleadoCard({
   empleado,
   sucursales,
   sucursalNombre,
+  nombreOverride,
+  deleteLabel = "Eliminar empleado",
 }: {
-  empleado: Empleado;
+  empleado: Perfil;
   sucursales: { id: string; nombre: string }[];
   sucursalNombre: string;
+  nombreOverride?: string;
+  deleteLabel?: string;
 }) {
   const [editando, setEditando] = useState(false);
   const actualizarConId = actualizarEmpleado.bind(null, empleado.id);
@@ -82,7 +181,7 @@ function EmpleadoCard({
       <div className="flex items-center justify-between gap-4 p-4">
         <div>
           <p className="font-semibold text-zinc-900 dark:text-zinc-50">
-            {empleado.nombre}
+            {nombreOverride ?? empleado.nombre}
             {!empleado.activo && (
               <span className="ml-2 rounded-full bg-zinc-200 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
                 inactivo
@@ -103,7 +202,7 @@ function EmpleadoCard({
           </button>
           <DeleteButton
             action={() => eliminarEmpleado(empleado.id)}
-            label="Eliminar empleado"
+            label={deleteLabel}
           />
         </div>
       </div>
@@ -116,8 +215,9 @@ function EmpleadoCard({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <input
               name="nombre"
-              defaultValue={empleado.nombre}
+              defaultValue={nombreOverride ?? empleado.nombre}
               required
+              readOnly={!!nombreOverride}
               className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
               placeholder="Nombre"
             />

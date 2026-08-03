@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPerfilActual } from "@/lib/auth/current-perfil";
+import { AccesosRapidos } from "./accesos-rapidos";
 
 function hoyISO() {
   return new Date().toISOString().slice(0, 10);
@@ -8,6 +9,15 @@ function hoyISO() {
 export default async function AdminHome() {
   const perfil = await getPerfilActual();
   const supabase = createAdminClient();
+
+  const { data: perfilConAcceso } = perfil
+    ? await supabase
+        .from("perfiles")
+        .select("nivel_acceso")
+        .eq("id", perfil.id)
+        .maybeSingle()
+    : { data: null };
+  const nivelAcceso = (perfilConAcceso?.nivel_acceso as Record<string, boolean>) ?? {};
 
   const hoy = hoyISO();
   const inicio = `${hoy}T00:00:00`;
@@ -108,6 +118,13 @@ export default async function AdminHome() {
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
         Control en vivo — {new Date().toLocaleDateString("es-AR")}
       </p>
+
+      <div className="mt-6">
+        <AccesosRapidos
+          esSuperadmin={perfil?.rol === "superadmin"}
+          nivelAcceso={nivelAcceso}
+        />
+      </div>
 
       {sucursales.length === 0 ? (
         <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-400">

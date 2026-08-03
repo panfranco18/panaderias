@@ -2,41 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  IconGrid,
-  IconPackage,
-  IconStorefront,
-  IconUsers,
-  IconTruckSupply,
-  IconBoxes,
-  IconCash,
-  IconClipboardList,
-  IconReceipt,
-  IconChart,
-  IconSettings,
-  IconIdCard,
-  IconWallet,
-  IconFileText,
-  IconHandshake,
-} from "@/components/admin-icons";
-
-const items = [
-  { href: "/admin", label: "Inicio", icon: IconGrid, exact: true, modulo: null },
-  { href: "/admin/productos", label: "Productos", icon: IconPackage, exact: false, modulo: "productos" },
-  { href: "/admin/sucursales", label: "Sucursales", icon: IconStorefront, exact: false, modulo: "sucursales" },
-  { href: "/admin/personal", label: "Personal", icon: IconUsers, exact: false, modulo: "personal" },
-  { href: "/admin/empleados", label: "Empleados", icon: IconIdCard, exact: false, modulo: "empleados" },
-  { href: "/admin/proveedores", label: "Proveedores", icon: IconTruckSupply, exact: false, modulo: "proveedores" },
-  { href: "/admin/stock", label: "Stock", icon: IconBoxes, exact: false, modulo: "stock" },
-  { href: "/admin/pedidos", label: "Pedidos", icon: IconClipboardList, exact: false, modulo: "pedidos" },
-  { href: "/admin/caja", label: "Caja", icon: IconCash, exact: false, modulo: "caja" },
-  { href: "/admin/facturacion", label: "Facturación", icon: IconReceipt, exact: false, modulo: "facturacion" },
-  { href: "/admin/gastos", label: "Gastos", icon: IconWallet, exact: false, modulo: "gastos" },
-  { href: "/admin/contratos", label: "Contratos", icon: IconFileText, exact: false, modulo: "contratos" },
-  { href: "/admin/clientes-cuenta-corriente", label: "Clientes CC", icon: IconHandshake, exact: false, modulo: "clientes_cc" },
-  { href: "/admin/reportes", label: "Reportes", icon: IconChart, exact: false, modulo: "reportes" },
-  { href: "/admin/configuracion", label: "Configuración", icon: IconSettings, exact: false, modulo: "configuracion" },
-] as const;
+import { MODULOS_NAV as items } from "@/lib/admin-modulos";
 
 export function AdminNav({
   rol,
