@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import {
   actualizarEmpleado,
   eliminarEmpleado,
+  darAccesoAEmpleado,
   type ActionState,
 } from "./actions";
 import { MODULOS_ACCESO } from "./modulos";
@@ -111,9 +112,33 @@ function RosterCard({
   sucursalNombreFn: (id: string | null) => string;
 }) {
   const [abierto, setAbierto] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const darAccesoConId = darAccesoAEmpleado.bind(null, empleado.id);
+  const [state, formAction, pending] = useActionState(darAccesoConId, initialState);
   const nombreCompleto = [empleado.nombre, empleado.apellido]
     .filter(Boolean)
     .join(" ");
+
+  if (state.ok && state.passwordTemporal && !dismissed) {
+    return (
+      <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
+        <p className="font-semibold text-zinc-900 dark:text-zinc-50">
+          {nombreCompleto}
+        </p>
+        <p className="mt-2 text-sm text-amber-800 dark:text-amber-200">
+          Acceso creado. Contraseña temporal:{" "}
+          <code className="font-mono font-bold">{state.passwordTemporal}</code> —
+          copiala y compartila ahora, no se vuelve a mostrar.
+        </p>
+        <button
+          onClick={() => setDismissed(true)}
+          className="mt-3 rounded-full bg-amber-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-amber-700"
+        >
+          Ya la copié
+        </button>
+      </div>
+    );
+  }
 
   if (perfil) {
     return (
@@ -147,7 +172,12 @@ function RosterCard({
       </div>
       {abierto && (
         <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
-          <DarAccesoForm empleadoId={empleado.id} sucursales={sucursales} />
+          <DarAccesoForm
+            sucursales={sucursales}
+            formAction={formAction}
+            pending={pending}
+            error={state.error}
+          />
         </div>
       )}
     </div>

@@ -1,21 +1,18 @@
 "use client";
 
-import { useActionState } from "react";
-import { darAccesoAEmpleado, type ActionState } from "./actions";
 import { MODULOS_ACCESO } from "./modulos";
 
-const initialState: ActionState = {};
-
 export function DarAccesoForm({
-  empleadoId,
   sucursales,
+  formAction,
+  pending,
+  error,
 }: {
-  empleadoId: string;
   sucursales: { id: string; nombre: string }[];
+  formAction: (formData: FormData) => void;
+  pending: boolean;
+  error?: string;
 }) {
-  const darAccesoConId = darAccesoAEmpleado.bind(null, empleadoId);
-  const [state, formAction, pending] = useActionState(darAccesoConId, initialState);
-
   return (
     <form
       action={formAction}
@@ -74,16 +71,8 @@ export function DarAccesoForm({
         </div>
       </fieldset>
 
-      {state.error && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{state.error}</p>
-      )}
-
-      {state.passwordTemporal && (
-        <p className="mt-2 rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-          Acceso creado. Contraseña temporal:{" "}
-          <code className="font-mono font-bold">{state.passwordTemporal}</code> —
-          copiala y compartila ahora, no se vuelve a mostrar.
-        </p>
+      {error && (
+        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
       )}
 
       <button
