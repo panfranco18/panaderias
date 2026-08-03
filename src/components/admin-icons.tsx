@@ -7,6 +7,67 @@ export function IconChart({ className }: { className?: string }) {
   );
 }
 
+export function IconIdCard({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="2.5" y="4.5" width="19" height="15" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="8" cy="10.5" r="1.8" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M5 15.5c0-1.7 1.3-2.5 3-2.5s3 0.8 3 2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M14 9.5h5M14 12.5h5M14 15.5h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconWallet({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path d="M16 12.5h3v3h-3a1.5 1.5 0 0 1 0-3z" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M3 8.5h14" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+}
+
+export function IconFileText({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M6 2.5h9l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V4a1.5 1.5 0 0 1 1-1.5z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="M14.5 2.5V7h4.5" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M8 12h8M8 15.5h8M8 8.5h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconHandshake({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M2.5 10.5 6 7l4 3 2-1.5 3 2 2-1.5 4.5 3.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6 7 3 9.5v4L8 17l2-1.5 2 1.5 2-1.5 2 1.5 3.5-2.5v-4L18.5 13"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function IconSettings({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
