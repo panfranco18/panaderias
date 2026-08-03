@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRolEnSucursal } from "@/lib/auth/current-perfil";
+import { revisarStockBajo } from "@/lib/notificaciones";
 
 export type ActionState = { error?: string; ok?: boolean };
 
@@ -70,6 +71,13 @@ export async function registrarMovimiento(
   });
   if (movError) return { error: movError.message };
 
+  await revisarStockBajo(supabase, {
+    productoId,
+    sucursalId,
+    cantidadNueva: nuevaCantidad,
+  });
+
   revalidatePath("/admin/stock");
+  revalidatePath("/admin");
   return { ok: true };
 }

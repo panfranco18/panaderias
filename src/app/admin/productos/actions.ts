@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRol } from "@/lib/auth/current-perfil";
+import { notificarCambioPrecio } from "@/lib/notificaciones";
 
 export type ActionState = { error?: string; ok?: boolean };
 
@@ -44,6 +45,7 @@ export async function crearProducto(
   const precioBase = Number(formData.get("precio_base") || 0);
   const codigoBarras = String(formData.get("codigo_barras") || "").trim() || null;
   const unidadMedida = String(formData.get("unidad_medida") || "unidad");
+  const stockMinimo = Number(formData.get("stock_minimo") || 0);
   const imagen = formData.get("imagen") as File | null;
 
   if (!nombre) return { error: "El nombre es obligatorio" };
@@ -66,6 +68,7 @@ export async function crearProducto(
     imagen_url: imagenUrl,
     codigo_barras: codigoBarras,
     unidad_medida: unidadMedida,
+    stock_minimo: stockMinimo,
   });
 
   if (error) {
@@ -102,12 +105,19 @@ export async function actualizarProducto(
   const activo = formData.get("activo") === "on";
   const codigoBarras = String(formData.get("codigo_barras") || "").trim() || null;
   const unidadMedida = String(formData.get("unidad_medida") || "unidad");
+  const stockMinimo = Number(formData.get("stock_minimo") || 0);
   const imagen = formData.get("imagen") as File | null;
 
   if (!nombre) return { error: "El nombre es obligatorio" };
   if (!categoria) return { error: "La categoría es obligatoria" };
 
   const supabase = createAdminClient();
+
+  const { data: productoActual } = await supabase
+    .from("productos")
+    .select("precio_base")
+    .eq("id", id)
+    .maybeSingle();
 
   const update: Record<string, unknown> = {
     nombre,
@@ -117,6 +127,7 @@ export async function actualizarProducto(
     activo,
     codigo_barras: codigoBarras,
     unidad_medida: unidadMedida,
+    stock_minimo: stockMinimo,
   };
 
   try {
@@ -132,6 +143,7 @@ export async function actualizarProducto(
   if (error) {
     if (esColumnaFaltante(error.message)) {
       delete update.codigo_barras;
+      delete update.stock_minimo;
       const { error: error2 } = await supabase
         .from("productos")
         .update(update)
@@ -140,6 +152,15 @@ export async function actualizarProducto(
     } else {
       return { error: error.message };
     }
+  }
+
+  if (productoActual && Number(productoActual.precio_base) !== precioBase) {
+    await notificarCambioPrecio(supabase, {
+      productoId: id,
+      nombre,
+      precioAnterior: Number(productoActual.precio_base),
+      precioNuevo: precioBase,
+    });
   }
 
   revalidatePath("/admin/productos");
@@ -171,6 +192,12 @@ export async function actualizarPrecioGlobal(
 
   const supabase = createAdminClient();
 
+  const { data: productoActual } = await supabase
+    .from("productos")
+    .select("nombre, precio_base")
+    .eq("id", productoId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("productos")
     .update({ precio_base: precio })
@@ -184,6 +211,15 @@ export async function actualizarPrecioGlobal(
     .from("productos_precios_sucursal")
     .delete()
     .eq("producto_id", productoId);
+
+  if (productoActual) {
+    await notificarCambioPrecio(supabase, {
+      productoId,
+      nombre: productoActual.nombre,
+      precioAnterior: Number(productoActual.precio_base),
+      precioNuevo: precio,
+    });
+  }
 
   revalidatePath("/admin/productos");
   return { ok: true };
@@ -199,12 +235,22 @@ export async function guardarPreciosSucursal(
 
   const supabase = createAdminClient();
 
-  const { data: sucursales } = await supabase
-    .from("sucursales")
-    .select("id");
+  const [{ data: sucursales }, { data: producto }, { data: preciosActuales }] =
+    await Promise.all([
+      supabase.from("sucursales").select("id, nombre"),
+      supabase.from("productos").select("nombre, precio_base").eq("id", productoId).maybeSingle(),
+      supabase
+        .from("productos_precios_sucursal")
+        .select("sucursal_id, precio")
+        .eq("producto_id", productoId),
+    ]);
 
   for (const s of sucursales ?? []) {
     const raw = String(formData.get(`precio_${s.id}`) || "").trim();
+    const precioAnterior =
+      preciosActuales?.find((p) => p.sucursal_id === s.id)?.precio ??
+      producto?.precio_base ??
+      0;
 
     if (raw === "") {
       await supabase
@@ -224,6 +270,17 @@ export async function guardarPreciosSucursal(
         { producto_id: productoId, sucursal_id: s.id, precio },
         { onConflict: "producto_id,sucursal_id" }
       );
+
+    if (producto && Number(precioAnterior) !== precio) {
+      await notificarCambioPrecio(supabase, {
+        productoId,
+        nombre: producto.nombre,
+        precioAnterior: Number(precioAnterior),
+        precioNuevo: precio,
+        sucursalId: s.id,
+        sucursalNombre: s.nombre,
+      });
+    }
   }
 
   revalidatePath("/admin/productos");

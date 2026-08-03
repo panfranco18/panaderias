@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminNav } from "@/components/admin-nav";
 import { LogoutButton } from "@/components/logout-button";
 import { FichajeWidget } from "@/components/fichaje-widget";
+import { NotificacionesWidget } from "@/components/notificaciones-widget";
 
 export default async function AdminLayout({
   children,
@@ -39,6 +40,25 @@ export default async function AdminLayout({
     estadoFichaje = (ultimoRegistro?.tipo as "entrada" | "salida" | undefined) ?? null;
   }
 
+  let notificaciones: { id: string; tipo: string; mensaje: string; created_at: string }[] = [];
+  if (perfil) {
+    let query = admin
+      .from("notificaciones")
+      .select("id, tipo, mensaje, created_at")
+      .eq("leida", false)
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (rol !== "superadmin") {
+      query = perfil.sucursal_id
+        ? query.or(`sucursal_id.is.null,sucursal_id.eq.${perfil.sucursal_id}`)
+        : query.is("sucursal_id", null);
+    }
+
+    const { data } = await query;
+    notificaciones = data ?? [];
+  }
+
   return (
     <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <aside className="no-print flex w-56 shrink-0 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
@@ -56,6 +76,11 @@ export default async function AdminLayout({
         {perfil?.sucursal_id && (
           <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
             <FichajeWidget estadoInicial={estadoFichaje} />
+          </div>
+        )}
+        {perfil && (
+          <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
+            <NotificacionesWidget notificaciones={notificaciones} />
           </div>
         )}
         <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">

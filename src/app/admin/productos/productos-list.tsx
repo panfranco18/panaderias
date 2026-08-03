@@ -23,6 +23,7 @@ type Producto = {
   activo: boolean;
   codigo_barras?: string | null;
   unidad_medida?: string;
+  stock_minimo?: number;
 };
 
 const UNIDAD_LABEL: Record<string, string> = {
@@ -251,6 +252,19 @@ function ProductoCard({
                 placeholder="Código de barras"
                 className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
               />
+              <div>
+                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  Stock mínimo (avisa si baja de esto)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  name="stock_minimo"
+                  defaultValue={producto.stock_minimo ?? 0}
+                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                />
+              </div>
               <input
                 type="file"
                 name="imagen"
