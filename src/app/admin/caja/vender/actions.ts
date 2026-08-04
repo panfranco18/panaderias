@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRolEnSucursal } from "@/lib/auth/current-perfil";
+import { notificarVenta } from "@/lib/notificaciones";
 
 const STAFF = ["superadmin", "encargado_sucursal", "empleado"] as const;
 
@@ -87,6 +88,20 @@ export async function crearVenta(input: {
   });
 
   if (cajaError) return { error: cajaError.message };
+
+  const { data: usuario } = await supabase
+    .from("perfiles")
+    .select("nombre")
+    .eq("id", auth.perfil.id)
+    .maybeSingle();
+
+  await notificarVenta(supabase, {
+    sucursalId: input.sucursalId,
+    sucursalNombre: sucursal?.nombre ?? "",
+    monto: total,
+    descripcion: "Venta (POS)",
+    usuarioNombre: usuario?.nombre,
+  });
 
   revalidatePath("/admin/caja");
   revalidatePath("/admin");

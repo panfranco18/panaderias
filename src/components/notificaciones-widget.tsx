@@ -6,7 +6,14 @@ import {
   IconBell,
   IconAlertTriangle,
   IconTag,
+  IconReceipt,
 } from "@/components/admin-icons";
+
+function iconoNotificacion(tipo: string) {
+  if (tipo === "stock_bajo") return { Icon: IconAlertTriangle, color: "text-red-600 dark:text-red-400" };
+  if (tipo === "venta_registrada") return { Icon: IconReceipt, color: "text-green-600 dark:text-green-400" };
+  return { Icon: IconTag, color: "text-amber-600 dark:text-amber-400" };
+}
 import {
   marcarNotificacionLeida,
   marcarTodasLeidas,
@@ -59,7 +66,7 @@ export function NotificacionesWidget({
       </button>
 
       {abierto && (
-        <div className="absolute bottom-full left-0 z-50 mb-1 w-80 rounded-lg border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="absolute bottom-full left-0 z-50 mb-1 w-[min(20rem,85vw)] rounded-lg border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
               Notificaciones
@@ -81,11 +88,7 @@ export function NotificacionesWidget({
           ) : (
             <ul className="mt-2 flex max-h-80 flex-col gap-1.5 overflow-y-auto">
               {items.map((n) => {
-                const Icon = n.tipo === "stock_bajo" ? IconAlertTriangle : IconTag;
-                const color =
-                  n.tipo === "stock_bajo"
-                    ? "text-red-600 dark:text-red-400"
-                    : "text-amber-600 dark:text-amber-400";
+                const { Icon, color } = iconoNotificacion(n.tipo);
                 return (
                   <li
                     key={n.id}

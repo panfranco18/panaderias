@@ -30,6 +30,28 @@ export async function notificarCambioPrecio(
   });
 }
 
+export async function notificarVenta(
+  supabase: Supabase,
+  params: {
+    sucursalId: string;
+    sucursalNombre: string;
+    monto: number;
+    descripcion?: string | null;
+    usuarioNombre?: string | null;
+  }
+) {
+  const { sucursalId, sucursalNombre, monto, descripcion, usuarioNombre } = params;
+  const quien = usuarioNombre ? ` (${usuarioNombre})` : "";
+  const detalle = descripcion ? ` — ${descripcion}` : "";
+  const mensaje = `Ingreso de caja en ${sucursalNombre}${quien}: $${monto.toFixed(2)}${detalle}`;
+
+  await supabase.from("notificaciones").insert({
+    tipo: "venta_registrada",
+    sucursal_id: sucursalId,
+    mensaje,
+  });
+}
+
 export async function revisarStockBajo(
   supabase: Supabase,
   params: { productoId: string; sucursalId: string; cantidadNueva: number }

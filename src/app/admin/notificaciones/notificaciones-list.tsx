@@ -1,8 +1,14 @@
 "use client";
 
 import { useTransition } from "react";
-import { IconAlertTriangle, IconTag } from "@/components/admin-icons";
+import { IconAlertTriangle, IconTag, IconReceipt } from "@/components/admin-icons";
 import { marcarNotificacionLeida } from "./actions";
+
+function iconoNotificacion(tipo: string) {
+  if (tipo === "stock_bajo") return { Icon: IconAlertTriangle, color: "text-red-600 dark:text-red-400" };
+  if (tipo === "venta_registrada") return { Icon: IconReceipt, color: "text-green-600 dark:text-green-400" };
+  return { Icon: IconTag, color: "text-amber-600 dark:text-amber-400" };
+}
 
 type Notificacion = {
   id: string;
@@ -36,11 +42,7 @@ export function NotificacionesList({
   return (
     <ul className="flex flex-col gap-2">
       {notificaciones.map((n) => {
-        const Icon = n.tipo === "stock_bajo" ? IconAlertTriangle : IconTag;
-        const color =
-          n.tipo === "stock_bajo"
-            ? "text-red-600 dark:text-red-400"
-            : "text-amber-600 dark:text-amber-400";
+        const { Icon, color } = iconoNotificacion(n.tipo);
         return (
           <li
             key={n.id}

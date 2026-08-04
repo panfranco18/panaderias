@@ -13,6 +13,7 @@ export default async function NotificacionesPage() {
     .limit(200);
 
   if (perfil && perfil.rol !== "superadmin") {
+    query = query.neq("tipo", "venta_registrada");
     query = perfil.sucursalId
       ? query.or(`sucursal_id.is.null,sucursal_id.eq.${perfil.sucursalId}`)
       : query.is("sucursal_id", null);

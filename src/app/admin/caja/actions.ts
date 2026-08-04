@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRolEnSucursal } from "@/lib/auth/current-perfil";
+import { notificarVenta } from "@/lib/notificaciones";
 
 export type ActionState = { error?: string; ok?: boolean };
 
@@ -33,6 +34,21 @@ export async function registrarMovimientoCaja(
   });
 
   if (error) return { error: error.message };
+
+  if (tipo === "ingreso") {
+    const [{ data: sucursal }, { data: usuario }] = await Promise.all([
+      supabase.from("sucursales").select("nombre").eq("id", sucursalId).maybeSingle(),
+      supabase.from("perfiles").select("nombre").eq("id", auth.perfil.id).maybeSingle(),
+    ]);
+
+    await notificarVenta(supabase, {
+      sucursalId,
+      sucursalNombre: sucursal?.nombre ?? "",
+      monto,
+      descripcion,
+      usuarioNombre: usuario?.nombre,
+    });
+  }
 
   revalidatePath("/admin/caja");
   return { ok: true };
