@@ -11,6 +11,7 @@ type Categoria = {
   categoria: string;
   visible_web: boolean;
   imagen_url: string | null;
+  permite_reportar_faltante: boolean;
 };
 
 const initialState: ActionState = {};
@@ -127,6 +128,15 @@ function CategoriaCard({
               className="rounded"
             />
             Visible en la página de inicio
+          </label>
+          <label className="mt-2 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <input
+              type="checkbox"
+              name="permite_reportar_faltante"
+              defaultChecked={categoria.permite_reportar_faltante}
+              className="rounded"
+            />
+            Los empleados pueden reportar faltantes en esta categoría
           </label>
           {state.error && (
             <p className="mt-2 text-sm text-red-600 dark:text-red-400">{state.error}</p>

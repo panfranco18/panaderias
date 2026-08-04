@@ -6,6 +6,7 @@ import { marcarNotificacionLeida } from "./actions";
 
 function iconoNotificacion(tipo: string) {
   if (tipo === "stock_bajo") return { Icon: IconAlertTriangle, color: "text-red-600 dark:text-red-400" };
+  if (tipo === "faltante_reportado") return { Icon: IconAlertTriangle, color: "text-orange-600 dark:text-orange-400" };
   if (tipo === "venta_registrada") return { Icon: IconReceipt, color: "text-green-600 dark:text-green-400" };
   return { Icon: IconTag, color: "text-amber-600 dark:text-amber-400" };
 }

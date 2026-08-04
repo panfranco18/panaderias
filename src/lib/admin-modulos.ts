@@ -15,6 +15,7 @@ import {
   IconFileText,
   IconHandshake,
   IconTag,
+  IconClock,
 } from "@/components/admin-icons";
 
 export const MODULOS_NAV = [
@@ -23,6 +24,7 @@ export const MODULOS_NAV = [
   { href: "/admin/categorias", label: "Categorías", icon: IconTag, exact: false, modulo: "categorias" },
   { href: "/admin/sucursales", label: "Sucursales", icon: IconStorefront, exact: false, modulo: "sucursales" },
   { href: "/admin/personal", label: "Personal", icon: IconUsers, exact: false, modulo: "personal" },
+  { href: "/admin/horarios", label: "Horarios", icon: IconClock, exact: false, modulo: "horarios" },
   { href: "/admin/empleados", label: "Empleados", icon: IconIdCard, exact: false, modulo: "empleados" },
   { href: "/admin/proveedores", label: "Proveedores", icon: IconTruckSupply, exact: false, modulo: "proveedores" },
   { href: "/admin/stock", label: "Stock", icon: IconBoxes, exact: false, modulo: "stock" },
@@ -41,6 +43,7 @@ export const BOTON_GRADIENTE: Record<string, string> = {
   categorias: "from-rose-400 to-orange-500",
   sucursales: "from-sky-500 to-blue-600",
   personal: "from-violet-500 to-purple-600",
+  horarios: "from-sky-400 to-cyan-600",
   empleados: "from-fuchsia-500 to-pink-600",
   proveedores: "from-teal-500 to-emerald-600",
   stock: "from-lime-500 to-green-600",

@@ -15,6 +15,7 @@ const MODULOS = [
   "categorias",
   "sucursales",
   "personal",
+  "horarios",
   "proveedores",
   "stock",
   "pedidos",

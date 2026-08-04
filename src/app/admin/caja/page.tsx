@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { CajaFiltros } from "./caja-filtros";
 import { NuevoMovimientoForm } from "./nuevo-movimiento-form";
 import { MovimientosList } from "./movimientos-list";
+import { ReportarFaltanteForm } from "./reportar-faltante-form";
 
 function hoyISO() {
   return new Date().toISOString().slice(0, 10);
@@ -20,6 +21,12 @@ export default async function CajaPage({
     .from("sucursales")
     .select("id, nombre")
     .order("nombre");
+
+  const { data: categoriasPermitidas } = await supabase
+    .from("categorias_config")
+    .select("categoria")
+    .eq("permite_reportar_faltante", true)
+    .order("categoria");
 
   const sucursalId = sucursalParam || sucursales?.[0]?.id;
   const fecha = fechaParam || hoyISO();
@@ -89,8 +96,12 @@ export default async function CajaPage({
             <ResumenCard label="Saldo calculado" valor={saldo} destacado />
           </div>
 
-          <div className="mt-6 max-w-lg">
+          <div className="mt-6 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
             <NuevoMovimientoForm sucursalId={sucursalId!} />
+            <ReportarFaltanteForm
+              sucursalId={sucursalId!}
+              categorias={(categoriasPermitidas ?? []).map((c) => c.categoria)}
+            />
           </div>
 
           <div className="mt-6">

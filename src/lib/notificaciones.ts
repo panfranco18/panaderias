@@ -52,6 +52,27 @@ export async function notificarVenta(
   });
 }
 
+export async function notificarFaltante(
+  supabase: Supabase,
+  params: {
+    sucursalId: string;
+    sucursalNombre: string;
+    categoria: string;
+    descripcion: string;
+    usuarioNombre?: string | null;
+  }
+) {
+  const { sucursalId, sucursalNombre, categoria, descripcion, usuarioNombre } = params;
+  const quien = usuarioNombre ? ` (${usuarioNombre})` : "";
+  const mensaje = `Faltante reportado en ${sucursalNombre}${quien} — ${categoria}: ${descripcion}`;
+
+  await supabase.from("notificaciones").insert({
+    tipo: "faltante_reportado",
+    sucursal_id: sucursalId,
+    mensaje,
+  });
+}
+
 export async function revisarStockBajo(
   supabase: Supabase,
   params: { productoId: string; sucursalId: string; cantidadNueva: number }

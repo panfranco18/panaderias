@@ -52,6 +52,15 @@ export function NuevaCategoriaForm() {
           <input type="checkbox" name="visible_web" defaultChecked className="rounded" />
           Visible en la página de inicio
         </label>
+        <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <input
+            type="checkbox"
+            name="permite_reportar_faltante"
+            defaultChecked
+            className="rounded"
+          />
+          Los empleados pueden reportar faltantes en esta categoría
+        </label>
       </div>
 
       {state.error && (

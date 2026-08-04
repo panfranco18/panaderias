@@ -37,6 +37,7 @@ export async function crearCategoria(
 
   const nombre = String(formData.get("nombre") || "").trim();
   const visible = formData.get("visible_web") === "on";
+  const permiteFaltante = formData.get("permite_reportar_faltante") === "on";
   const imagen = formData.get("imagen") as File | null;
 
   if (!nombre) return { error: "El nombre de la categoría es obligatorio" };
@@ -60,6 +61,7 @@ export async function crearCategoria(
   const { error } = await supabase.from("categorias_config").insert({
     categoria: nombre,
     visible_web: visible,
+    permite_reportar_faltante: permiteFaltante,
     imagen_url: imagenUrl,
   });
 
@@ -80,11 +82,15 @@ export async function actualizarCategoria(
   if ("error" in auth) return auth;
 
   const visible = formData.get("visible_web") === "on";
+  const permiteFaltante = formData.get("permite_reportar_faltante") === "on";
   const imagen = formData.get("imagen") as File | null;
 
   const supabase = createAdminClient();
 
-  const update: Record<string, unknown> = { visible_web: visible };
+  const update: Record<string, unknown> = {
+    visible_web: visible,
+    permite_reportar_faltante: permiteFaltante,
+  };
 
   try {
     if (imagen && imagen.size > 0) {

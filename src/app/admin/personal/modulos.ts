@@ -3,6 +3,7 @@ export const MODULOS_ACCESO = [
   { key: "categorias", label: "Categorías" },
   { key: "sucursales", label: "Sucursales" },
   { key: "personal", label: "Personal" },
+  { key: "horarios", label: "Horarios" },
   { key: "proveedores", label: "Proveedores" },
   { key: "stock", label: "Stock" },
   { key: "pedidos", label: "Pedidos" },
