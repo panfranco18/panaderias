@@ -56,7 +56,7 @@ const categorias = [
 export default async function Home() {
   const supabase = await createClient();
 
-  const [{ data: productos }, { data: precios }, { data: sucursales }] =
+  const [{ data: productos }, { data: precios }, { data: sucursales }, { data: categoriasConfig }] =
     await Promise.all([
       supabase
         .from("productos")
@@ -69,7 +69,13 @@ export default async function Home() {
         .select("id, nombre")
         .eq("activa", true)
         .order("nombre"),
+      supabase.from("categorias_config").select("categoria").eq("visible_web", false),
     ]);
+
+  const categoriasOcultas = new Set((categoriasConfig ?? []).map((c) => c.categoria));
+  const productosVisibles = (productos ?? []).filter(
+    (p) => !categoriasOcultas.has(p.categoria)
+  );
 
   return (
     <div className="flex-1">
@@ -142,7 +148,7 @@ export default async function Home() {
           </p>
           <div className="mt-10">
             <Catalogo
-              productos={productos ?? []}
+              productos={productosVisibles}
               precios={precios ?? []}
               sucursales={sucursales ?? []}
             />

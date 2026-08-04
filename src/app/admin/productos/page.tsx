@@ -1,16 +1,23 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NuevoProductoForm } from "./nuevo-producto-form";
 import { ProductosCategorias } from "./productos-categorias";
+import { CategoriasVisibilidadForm } from "./categorias-visibilidad-form";
 
 export default async function ProductosPage() {
   const supabase = createAdminClient();
 
-  const [{ data: productos, error }, { data: sucursales }, { data: precios }] =
+  const [{ data: productos, error }, { data: sucursales }, { data: precios }, { data: categoriasConfig }] =
     await Promise.all([
       supabase.from("productos").select("*").order("created_at"),
       supabase.from("sucursales").select("id, nombre").order("nombre"),
       supabase.from("productos_precios_sucursal").select("*"),
+      supabase.from("categorias_config").select("categoria, visible_web"),
     ]);
+
+  const visibilidad: Record<string, boolean> = {};
+  for (const c of categoriasConfig ?? []) {
+    visibilidad[c.categoria] = c.visible_web;
+  }
 
   return (
     <div className="p-8">
@@ -30,6 +37,10 @@ export default async function ProductosPage() {
 
       <div className="mt-6 max-w-lg">
         <NuevoProductoForm />
+      </div>
+
+      <div className="mt-6 max-w-2xl">
+        <CategoriasVisibilidadForm visibilidad={visibilidad} />
       </div>
 
       <div className="mt-8">
