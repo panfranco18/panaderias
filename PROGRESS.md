@@ -206,7 +206,7 @@ C:\panaderiap
 - [x] **Elegir qué categorías se muestran en la home** — pedido del usuario 2026-08-04 ("por categoría, los que van aparecen en la página de inicio"). Migración `supabase/009_categorias_visibilidad.sql`: tabla `categorias_config` (categoria, visible_web), sembrada con las 25 categorías, todas visibles por default (no cambia nada hasta que se desmarque alguna).
   - En `/admin/productos` hay un panel colapsable "Categorías visibles en la página de inicio" (solo superadmin) con un checkbox por categoría — al guardar, la home pública deja de mostrar los productos de las categorías desmarcadas (siguen disponibles en Productos, Stock, Caja, etc., esto solo afecta lo que ve el cliente en el sitio).
   - Pensado para el caso real de este negocio: ahora que el catálogo tiene rubros como Limpieza, Perfumería o Vinos (del autoservicio), el dueño puede elegir mostrar en la web solo lo que quiere vender online (ej. la panadería) sin borrar ni tocar el resto de los productos.
-  - **Pendiente**: falta que el usuario corra `supabase/009_categorias_visibilidad.sql` y lo pruebe.
+  - ~~Pendiente: falta correr `supabase/009_categorias_visibilidad.sql`~~ — corrida y probada 2026-08-04: desmarqué "Vinos" en el panel, guardé, y confirmé que desapareció de la home (los otros 24 rubros siguieron igual); lo volví a marcar visible al terminar la prueba.
 
 ## ⚠️ Pendiente de seguridad antes de producción
 
