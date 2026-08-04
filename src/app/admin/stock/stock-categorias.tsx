@@ -3,11 +3,8 @@
 import { useState } from "react";
 import { StockTabla } from "./stock-tabla";
 import { IconX } from "@/components/admin-icons";
-import {
-  iconoDeCategoria,
-  gradienteDeCategoria,
-  ordenarCategorias,
-} from "@/lib/categoria-visual";
+import { CategoriaBanner } from "@/components/categoria-banner";
+import { ordenarCategorias } from "@/lib/categoria-visual";
 
 type Producto = { id: string; nombre: string; categoria: string };
 type Stock = { producto_id: string; cantidad: number; unidad: string };
@@ -16,10 +13,12 @@ export function StockCategorias({
   productos,
   stock,
   sucursalId,
+  imagenPorCategoria,
 }: {
   productos: Producto[];
   stock: Stock[];
   sucursalId: string;
+  imagenPorCategoria: Record<string, string | null>;
 }) {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaAbierta, setCategoriaAbierta] = useState<string | null>(null);
@@ -65,25 +64,15 @@ export function StockCategorias({
         </div>
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {categoriasOrdenadas.map((categoria) => {
-            const items = porCategoria[categoria];
-            const Icon = iconoDeCategoria(categoria);
-            const gradiente = gradienteDeCategoria(categoria);
-            return (
-              <button
-                key={categoria}
-                onClick={() => setCategoriaAbierta(categoria)}
-                className={`group relative flex aspect-square flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-br ${gradiente} p-4 text-center text-white shadow-md transition-transform hover:scale-[1.03] hover:shadow-xl`}
-              >
-                <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
-                <Icon className="h-10 w-10 drop-shadow-sm" />
-                <span className="text-sm font-bold">{categoria}</span>
-                <span className="text-xs text-white/80">
-                  {items.length} producto{items.length === 1 ? "" : "s"}
-                </span>
-              </button>
-            );
-          })}
+          {categoriasOrdenadas.map((categoria) => (
+            <CategoriaBanner
+              key={categoria}
+              categoria={categoria}
+              cantidad={porCategoria[categoria].length}
+              imagenUrl={imagenPorCategoria[categoria]}
+              onClick={() => setCategoriaAbierta(categoria)}
+            />
+          ))}
         </div>
       )}
 

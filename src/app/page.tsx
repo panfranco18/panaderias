@@ -69,13 +69,19 @@ export default async function Home() {
         .select("id, nombre")
         .eq("activa", true)
         .order("nombre"),
-      supabase.from("categorias_config").select("categoria").eq("visible_web", false),
+      supabase.from("categorias_config").select("categoria, visible_web, imagen_url"),
     ]);
 
-  const categoriasOcultas = new Set((categoriasConfig ?? []).map((c) => c.categoria));
+  const categoriasOcultas = new Set(
+    (categoriasConfig ?? []).filter((c) => !c.visible_web).map((c) => c.categoria)
+  );
   const productosVisibles = (productos ?? []).filter(
     (p) => !categoriasOcultas.has(p.categoria)
   );
+  const imagenPorCategoria: Record<string, string | null> = {};
+  for (const c of categoriasConfig ?? []) {
+    imagenPorCategoria[c.categoria] = c.imagen_url;
+  }
 
   return (
     <div className="flex-1">
@@ -151,6 +157,7 @@ export default async function Home() {
               productos={productosVisibles}
               precios={precios ?? []}
               sucursales={sucursales ?? []}
+              imagenPorCategoria={imagenPorCategoria}
             />
           </div>
         </div>

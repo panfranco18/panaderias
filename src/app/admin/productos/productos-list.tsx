@@ -9,7 +9,6 @@ import {
   guardarPreciosSucursal,
   type ActionState,
 } from "./actions";
-import { CATEGORIAS } from "./categorias";
 import { IconChevronDown, IconPackage } from "@/components/admin-icons";
 import { DeleteButton } from "@/components/delete-button";
 
@@ -45,10 +44,12 @@ export function ProductosList({
   productos,
   sucursales,
   precios,
+  categorias,
 }: {
   productos: Producto[];
   sucursales: { id: string; nombre: string }[];
   precios: PrecioSucursal[];
+  categorias: string[];
 }) {
   if (productos.length === 0) {
     return (
@@ -66,6 +67,7 @@ export function ProductosList({
           producto={p}
           sucursales={sucursales}
           precios={precios.filter((pr) => pr.producto_id === p.id)}
+          categorias={categorias}
         />
       ))}
     </div>
@@ -76,10 +78,12 @@ function ProductoCard({
   producto,
   sucursales,
   precios,
+  categorias,
 }: {
   producto: Producto;
   sucursales: { id: string; nombre: string }[];
   precios: PrecioSucursal[];
+  categorias: string[];
 }) {
   const [editando, setEditando] = useState(false);
   const [preciosAbierto, setPreciosAbierto] = useState(false);
@@ -216,7 +220,7 @@ function ProductoCard({
                 defaultValue={producto.categoria}
                 className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
               >
-                {CATEGORIAS.map((c) => (
+                {categorias.map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>

@@ -14,11 +14,13 @@ import {
   IconWallet,
   IconFileText,
   IconHandshake,
+  IconTag,
 } from "@/components/admin-icons";
 
 export const MODULOS_NAV = [
   { href: "/admin", label: "Inicio", icon: IconGrid, exact: true, modulo: null },
   { href: "/admin/productos", label: "Productos", icon: IconPackage, exact: false, modulo: "productos" },
+  { href: "/admin/categorias", label: "Categorías", icon: IconTag, exact: false, modulo: "categorias" },
   { href: "/admin/sucursales", label: "Sucursales", icon: IconStorefront, exact: false, modulo: "sucursales" },
   { href: "/admin/personal", label: "Personal", icon: IconUsers, exact: false, modulo: "personal" },
   { href: "/admin/empleados", label: "Empleados", icon: IconIdCard, exact: false, modulo: "empleados" },
@@ -36,6 +38,7 @@ export const MODULOS_NAV = [
 
 export const BOTON_GRADIENTE: Record<string, string> = {
   productos: "from-amber-500 to-orange-600",
+  categorias: "from-rose-400 to-orange-500",
   sucursales: "from-sky-500 to-blue-600",
   personal: "from-violet-500 to-purple-600",
   empleados: "from-fuchsia-500 to-pink-600",

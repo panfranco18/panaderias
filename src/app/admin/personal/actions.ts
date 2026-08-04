@@ -12,6 +12,7 @@ export type ActionState = {
 
 const MODULOS = [
   "productos",
+  "categorias",
   "sucursales",
   "personal",
   "proveedores",
@@ -19,6 +20,7 @@ const MODULOS = [
   "pedidos",
   "caja",
   "facturacion",
+  "reportes",
 ] as const;
 
 function nivelAccesoDesdeForm(formData: FormData) {

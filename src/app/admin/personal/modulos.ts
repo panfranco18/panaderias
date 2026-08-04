@@ -1,5 +1,6 @@
 export const MODULOS_ACCESO = [
   { key: "productos", label: "Productos" },
+  { key: "categorias", label: "Categorías" },
   { key: "sucursales", label: "Sucursales" },
   { key: "personal", label: "Personal" },
   { key: "proveedores", label: "Proveedores" },

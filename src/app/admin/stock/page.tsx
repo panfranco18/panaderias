@@ -17,16 +17,23 @@ export default async function StockPage({
 
   const sucursalId = sucursalParam || sucursales?.[0]?.id;
 
-  const [{ data: productos }, { data: stockRows }] = await Promise.all([
-    supabase
-      .from("productos")
-      .select("id, nombre, categoria")
-      .eq("activo", true)
-      .order("nombre"),
-    sucursalId
-      ? supabase.from("stock").select("*").eq("sucursal_id", sucursalId)
-      : Promise.resolve({ data: [] as never[] }),
-  ]);
+  const [{ data: productos }, { data: stockRows }, { data: categoriasConfig }] =
+    await Promise.all([
+      supabase
+        .from("productos")
+        .select("id, nombre, categoria")
+        .eq("activo", true)
+        .order("nombre"),
+      sucursalId
+        ? supabase.from("stock").select("*").eq("sucursal_id", sucursalId)
+        : Promise.resolve({ data: [] as never[] }),
+      supabase.from("categorias_config").select("categoria, imagen_url"),
+    ]);
+
+  const imagenPorCategoria: Record<string, string | null> = {};
+  for (const c of categoriasConfig ?? []) {
+    imagenPorCategoria[c.categoria] = c.imagen_url;
+  }
 
   return (
     <div className="p-8">
@@ -55,6 +62,7 @@ export default async function StockPage({
             productos={productos}
             stock={stockRows ?? []}
             sucursalId={sucursalId!}
+            imagenPorCategoria={imagenPorCategoria}
           />
         </div>
       )}

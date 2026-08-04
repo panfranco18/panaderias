@@ -2,12 +2,11 @@
 
 import { useActionState, useRef, useEffect } from "react";
 import { crearProducto, type ActionState } from "./actions";
-import { CATEGORIAS } from "./categorias";
 import { IconPlus, IconUpload } from "@/components/admin-icons";
 
 const initialState: ActionState = {};
 
-export function NuevoProductoForm() {
+export function NuevoProductoForm({ categorias }: { categorias: string[] }) {
   const [state, formAction, pending] = useActionState(
     crearProducto,
     initialState
@@ -53,7 +52,7 @@ export function NuevoProductoForm() {
             <option value="" disabled>
               Elegir...
             </option>
-            {CATEGORIAS.map((c) => (
+            {categorias.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>

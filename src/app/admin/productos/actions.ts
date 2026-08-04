@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRol } from "@/lib/auth/current-perfil";
 import { notificarCambioPrecio } from "@/lib/notificaciones";
-import { CATEGORIAS } from "./categorias";
 
 export type ActionState = { error?: string; ok?: boolean };
 
@@ -285,27 +284,5 @@ export async function guardarPreciosSucursal(
   }
 
   revalidatePath("/admin/productos");
-  return { ok: true };
-}
-
-export async function actualizarVisibilidadCategorias(
-  _prevState: ActionState,
-  formData: FormData
-): Promise<ActionState> {
-  const auth = await requireRol(["superadmin"]);
-  if ("error" in auth) return auth;
-
-  const supabase = createAdminClient();
-
-  for (const categoria of CATEGORIAS) {
-    const visible = formData.get(`visible_${categoria}`) === "on";
-    const { error } = await supabase
-      .from("categorias_config")
-      .upsert({ categoria, visible_web: visible }, { onConflict: "categoria" });
-    if (error) return { error: error.message };
-  }
-
-  revalidatePath("/admin/productos");
-  revalidatePath("/");
   return { ok: true };
 }

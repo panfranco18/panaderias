@@ -22,6 +22,8 @@ type Producto = {
   unidad_medida?: string;
 };
 
+type ImagenPorCategoria = Record<string, string | null>;
+
 const UNIDAD_LABEL: Record<string, string> = {
   unidad: "",
   kg: "/kg",
@@ -36,10 +38,12 @@ export function Catalogo({
   productos,
   precios,
   sucursales,
+  imagenPorCategoria,
 }: {
   productos: Producto[];
   precios: Precio[];
   sucursales: Sucursal[];
+  imagenPorCategoria?: ImagenPorCategoria;
 }) {
   const { sucursalId, setSucursalId, addItem } = useCart();
   const [categoriaAbierta, setCategoriaAbierta] = useState<string | null>(null);
@@ -127,18 +131,35 @@ export function Catalogo({
           const items = porCategoria[categoria];
           const Icon = iconoDeCategoria(categoria);
           const gradiente = gradienteDeCategoria(categoria);
+          const imagenUrl = imagenPorCategoria?.[categoria];
           return (
             <button
               key={categoria}
               onClick={() => setCategoriaAbierta(categoria)}
-              className={`group relative flex aspect-square flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-br ${gradiente} p-4 text-center text-white shadow-md transition-transform hover:scale-[1.03] hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300`}
+              className="group relative flex aspect-square flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl text-center text-white shadow-md transition-transform hover:scale-[1.03] hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
             >
+              {imagenUrl ? (
+                <>
+                  <Image
+                    src={imagenUrl}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 45vw, 260px"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/30" />
+                </>
+              ) : (
+                <div className={`absolute inset-0 bg-gradient-to-br ${gradiente}`} />
+              )}
               <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
-              <Icon className="h-12 w-12 drop-shadow-sm sm:h-14 sm:w-14" />
-              <span className="font-[family-name:var(--font-playfair)] text-base font-bold sm:text-lg">
+              {!imagenUrl && (
+                <Icon className="relative h-12 w-12 drop-shadow-sm sm:h-14 sm:w-14" />
+              )}
+              <span className="relative font-[family-name:var(--font-playfair)] text-base font-bold drop-shadow sm:text-lg">
                 {categoria}
               </span>
-              <span className="text-xs text-white/80">
+              <span className="relative text-xs text-white/90 drop-shadow">
                 {items.length} producto{items.length === 1 ? "" : "s"}
               </span>
             </button>
