@@ -2,11 +2,41 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireRol } from "@/lib/auth/current-perfil";
+import { requireRol, getPerfilActual } from "@/lib/auth/current-perfil";
 
 export type ActionState = { error?: string; ok?: boolean };
 
 const STAFF = ["superadmin", "encargado_sucursal", "empleado"] as const;
+
+export type NotificacionActiva = {
+  id: string;
+  tipo: string;
+  mensaje: string;
+  created_at: string;
+};
+
+export async function obtenerNotificacionesActivas(): Promise<NotificacionActiva[]> {
+  const perfil = await getPerfilActual();
+  if (!perfil) return [];
+
+  const supabase = createAdminClient();
+  let query = supabase
+    .from("notificaciones")
+    .select("id, tipo, mensaje, created_at")
+    .eq("leida", false)
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  if (perfil.rol !== "superadmin") {
+    query = query.neq("tipo", "venta_registrada");
+    query = perfil.sucursalId
+      ? query.or(`sucursal_id.is.null,sucursal_id.eq.${perfil.sucursalId}`)
+      : query.is("sucursal_id", null);
+  }
+
+  const { data } = await query;
+  return data ?? [];
+}
 
 export async function marcarNotificacionLeida(id: string): Promise<ActionState> {
   const auth = await requireRol([...STAFF]);

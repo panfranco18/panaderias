@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   IconBell,
@@ -8,6 +8,7 @@ import {
   IconTag,
   IconReceipt,
 } from "@/components/admin-icons";
+import { unlockAudio, playNotificationChime } from "@/lib/notification-sound";
 
 function iconoNotificacion(tipo: string) {
   if (tipo === "stock_bajo") return { Icon: IconAlertTriangle, color: "text-red-600 dark:text-red-400" };
@@ -18,6 +19,7 @@ function iconoNotificacion(tipo: string) {
 import {
   marcarNotificacionLeida,
   marcarTodasLeidas,
+  obtenerNotificacionesActivas,
 } from "@/app/admin/notificaciones/actions";
 
 type Notificacion = {
@@ -35,6 +37,32 @@ export function NotificacionesWidget({
   const [abierto, setAbierto] = useState(false);
   const [items, setItems] = useState(notificaciones);
   const [, startTransition] = useTransition();
+  const idsVistos = useRef(new Set(notificaciones.map((n) => n.id)));
+
+  useEffect(() => {
+    function desbloquear() {
+      unlockAudio();
+    }
+    window.addEventListener("click", desbloquear, { once: true });
+    window.addEventListener("keydown", desbloquear, { once: true });
+    return () => {
+      window.removeEventListener("click", desbloquear);
+      window.removeEventListener("keydown", desbloquear);
+    };
+  }, []);
+
+  useEffect(() => {
+    const intervalo = setInterval(async () => {
+      const activas = await obtenerNotificacionesActivas();
+      const nuevas = activas.filter((n) => !idsVistos.current.has(n.id));
+      if (nuevas.length > 0) {
+        playNotificationChime();
+        nuevas.forEach((n) => idsVistos.current.add(n.id));
+        setItems((prev) => [...nuevas, ...prev]);
+      }
+    }, 25000);
+    return () => clearInterval(intervalo);
+  }, []);
 
   function dismiss(id: string) {
     setItems((prev) => prev.filter((n) => n.id !== id));

@@ -2,6 +2,7 @@ import { AdminNav } from "@/components/admin-nav";
 import { LogoutButton } from "@/components/logout-button";
 import { FichajeWidget } from "@/components/fichaje-widget";
 import { NotificacionesWidget } from "@/components/notificaciones-widget";
+import { InstallAppButton } from "@/components/install-app-button";
 
 type Notificacion = { id: string; tipo: string; mensaje: string; created_at: string };
 
@@ -38,6 +39,9 @@ export function AdminSidebarContent({
       )}
       <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
         <NotificacionesWidget notificaciones={notificaciones} />
+      </div>
+      <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
+        <InstallAppButton />
       </div>
       <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
         <LogoutButton />

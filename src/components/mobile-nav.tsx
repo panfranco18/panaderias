@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AdminSidebarContent } from "@/components/admin-sidebar-content";
+import { InstallAppButton } from "@/components/install-app-button";
 
 function IconMenu({ className }: { className?: string }) {
   return (
@@ -34,13 +35,16 @@ export function MobileNav(props: React.ComponentProps<typeof AdminSidebarContent
         <span className="font-[family-name:var(--font-playfair)] text-lg font-bold text-zinc-900 dark:text-zinc-50">
           Panadería
         </span>
-        <button
-          onClick={() => setAbierto(true)}
-          aria-label="Abrir menú"
-          className="rounded-md p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
-          <IconMenu className="h-6 w-6" />
-        </button>
+        <div className="flex items-center gap-1">
+          <InstallAppButton compact />
+          <button
+            onClick={() => setAbierto(true)}
+            aria-label="Abrir menú"
+            className="rounded-md p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            <IconMenu className="h-6 w-6" />
+          </button>
+        </div>
       </div>
 
       {abierto && (

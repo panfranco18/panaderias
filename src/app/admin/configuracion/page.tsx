@@ -1,14 +1,18 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getPerfilActual } from "@/lib/auth/current-perfil";
 import { ConfiguracionForm } from "./configuracion-form";
+import { MiCuentaForm } from "./mi-cuenta-form";
 
 export default async function ConfiguracionPage() {
   const supabase = createAdminClient();
+  const perfilActual = await getPerfilActual();
 
-  const { data: config, error } = await supabase
-    .from("configuracion_negocio")
-    .select("*")
-    .limit(1)
-    .maybeSingle();
+  const [{ data: config, error }, { data: miPerfil }] = await Promise.all([
+    supabase.from("configuracion_negocio").select("*").limit(1).maybeSingle(),
+    perfilActual
+      ? supabase.from("perfiles").select("nombre").eq("id", perfilActual.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
 
   return (
     <div className="p-8">
@@ -25,7 +29,8 @@ export default async function ConfiguracionPage() {
         </p>
       )}
 
-      <div className="mt-6 max-w-md">
+      <div className="mt-6 flex max-w-md flex-col gap-6">
+        <MiCuentaForm nombre={miPerfil?.nombre ?? ""} />
         <ConfiguracionForm config={config} />
       </div>
     </div>

@@ -45,3 +45,46 @@ export async function guardarConfiguracion(
   revalidatePath("/");
   return { ok: true };
 }
+
+export async function actualizarMiCuenta(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const auth = await requireRol(["superadmin"]);
+  if ("error" in auth) return auth;
+
+  const nombre = String(formData.get("nombre") || "").trim();
+  const password = String(formData.get("password") || "").trim();
+  const confirmarPassword = String(formData.get("confirmar_password") || "").trim();
+
+  if (!nombre && !password) {
+    return { error: "Ingresá un nombre o una contraseña nueva" };
+  }
+  if (password && password.length < 6) {
+    return { error: "La contraseña debe tener al menos 6 caracteres" };
+  }
+  if (password && password !== confirmarPassword) {
+    return { error: "Las contraseñas no coinciden" };
+  }
+
+  const supabase = createAdminClient();
+
+  if (nombre) {
+    const { error } = await supabase
+      .from("perfiles")
+      .update({ nombre })
+      .eq("id", auth.perfil.id);
+    if (error) return { error: error.message };
+  }
+
+  if (password) {
+    const { error } = await supabase.auth.admin.updateUserById(auth.perfil.id, {
+      password,
+    });
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath("/admin/configuracion");
+  revalidatePath("/admin", "layout");
+  return { ok: true };
+}

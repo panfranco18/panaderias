@@ -16,10 +16,12 @@ import {
   IconHandshake,
   IconTag,
   IconClock,
+  IconMegaphone,
 } from "@/components/admin-icons";
 
 export const MODULOS_NAV = [
   { href: "/admin", label: "Inicio", icon: IconGrid, exact: true, modulo: null },
+  { href: "/admin/avisos", label: "Avisos", icon: IconMegaphone, exact: false, modulo: "avisos" },
   { href: "/admin/productos", label: "Productos", icon: IconPackage, exact: false, modulo: "productos" },
   { href: "/admin/categorias", label: "Categorías", icon: IconTag, exact: false, modulo: "categorias" },
   { href: "/admin/sucursales", label: "Sucursales", icon: IconStorefront, exact: false, modulo: "sucursales" },

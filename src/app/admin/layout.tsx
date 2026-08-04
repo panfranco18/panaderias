@@ -2,6 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminSidebarContent } from "@/components/admin-sidebar-content";
 import { MobileNav } from "@/components/mobile-nav";
+import { AvisoBanner } from "@/components/aviso-banner";
+
+function hoyISO() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export default async function AdminLayout({
   children,
@@ -28,6 +33,24 @@ export default async function AdminLayout({
 
   let estadoFichaje: "entrada" | "salida" | null = null;
   if (perfil?.sucursal_id) {
+    const hoyInicio = `${new Date().toISOString().slice(0, 10)}T00:00:00`;
+    const hoyFin = new Date(new Date(hoyInicio).getTime() + 86400000).toISOString();
+
+    const { count: registrosHoy } = await admin
+      .from("registro_ingreso_personal")
+      .select("id", { count: "exact", head: true })
+      .eq("perfil_id", perfil.id)
+      .gte("fecha", hoyInicio)
+      .lt("fecha", hoyFin);
+
+    if (!registrosHoy) {
+      await admin.from("registro_ingreso_personal").insert({
+        perfil_id: perfil.id,
+        sucursal_id: perfil.sucursal_id,
+        tipo: "entrada",
+      });
+    }
+
     const { data: ultimoRegistro } = await admin
       .from("registro_ingreso_personal")
       .select("tipo")
@@ -58,6 +81,16 @@ export default async function AdminLayout({
     notificaciones = data ?? [];
   }
 
+  let avisos: { id: string; mensaje: string }[] = [];
+  if (perfil) {
+    const { data } = await admin
+      .from("avisos_personal")
+      .select("id, mensaje, perfil_id")
+      .eq("fecha", hoyISO())
+      .or(`perfil_id.is.null,perfil_id.eq.${perfil.id}`);
+    avisos = data ?? [];
+  }
+
   const sidebarProps = {
     nombre: perfil?.nombre ?? "Panel admin",
     rol,
@@ -73,7 +106,10 @@ export default async function AdminLayout({
       <aside className="no-print hidden w-56 shrink-0 flex-col border-r border-zinc-200 bg-white lg:flex dark:border-zinc-800 dark:bg-zinc-900">
         <AdminSidebarContent {...sidebarProps} />
       </aside>
-      <main className="flex-1 overflow-x-auto">{children}</main>
+      <main className="flex-1 overflow-x-auto">
+        <AvisoBanner avisos={avisos} />
+        {children}
+      </main>
     </div>
   );
 }
