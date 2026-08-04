@@ -38,6 +38,7 @@ export async function crearCategoria(
   const nombre = String(formData.get("nombre") || "").trim();
   const visible = formData.get("visible_web") === "on";
   const permiteFaltante = formData.get("permite_reportar_faltante") === "on";
+  const requiereConteoDiario = formData.get("requiere_declaracion_diaria") === "on";
   const imagen = formData.get("imagen") as File | null;
 
   if (!nombre) return { error: "El nombre de la categoría es obligatorio" };
@@ -62,6 +63,7 @@ export async function crearCategoria(
     categoria: nombre,
     visible_web: visible,
     permite_reportar_faltante: permiteFaltante,
+    requiere_declaracion_diaria: requiereConteoDiario,
     imagen_url: imagenUrl,
   });
 
@@ -69,6 +71,7 @@ export async function crearCategoria(
 
   revalidatePath("/admin/categorias");
   revalidatePath("/admin/productos");
+  revalidatePath("/admin");
   revalidatePath("/");
   return { ok: true };
 }
@@ -83,6 +86,7 @@ export async function actualizarCategoria(
 
   const visible = formData.get("visible_web") === "on";
   const permiteFaltante = formData.get("permite_reportar_faltante") === "on";
+  const requiereConteoDiario = formData.get("requiere_declaracion_diaria") === "on";
   const imagen = formData.get("imagen") as File | null;
 
   const supabase = createAdminClient();
@@ -90,6 +94,7 @@ export async function actualizarCategoria(
   const update: Record<string, unknown> = {
     visible_web: visible,
     permite_reportar_faltante: permiteFaltante,
+    requiere_declaracion_diaria: requiereConteoDiario,
   };
 
   try {
@@ -109,6 +114,7 @@ export async function actualizarCategoria(
 
   revalidatePath("/admin/categorias");
   revalidatePath("/admin/productos");
+  revalidatePath("/admin");
   revalidatePath("/");
   return { ok: true };
 }

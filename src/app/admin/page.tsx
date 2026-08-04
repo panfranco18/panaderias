@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPerfilActual } from "@/lib/auth/current-perfil";
 import { AccesosRapidos } from "./accesos-rapidos";
+import { DeclararStockForm } from "./declarar-stock-form";
 
 function hoyISO() {
   return new Date().toISOString().slice(0, 10);
@@ -35,16 +36,26 @@ export default async function AdminHome() {
 
   const sucursalIds = sucursales.map((s) => s.id);
 
-  const [{ data: ventas }, { data: caja }, { data: pedidosPendientes }, { data: personal }, { data: registros }] =
+  const [
+    { data: ventas },
+    { data: caja },
+    { data: pedidosPendientes },
+    { data: personal },
+    { data: registros },
+    { data: categoriasTrack },
+    { data: declarado },
+  ] =
     await Promise.all([
       sucursalIds.length
         ? supabase
             .from("ventas")
-            .select("sucursal_id, total")
+            .select("id, sucursal_id, total")
             .in("sucursal_id", sucursalIds)
             .gte("fecha", inicio)
             .lt("fecha", fin)
-        : Promise.resolve({ data: [] as { sucursal_id: string; total: number }[] }),
+        : Promise.resolve({
+            data: [] as { id: string; sucursal_id: string; total: number }[],
+          }),
       sucursalIds.length
         ? supabase
             .from("caja_movimientos")
@@ -77,11 +88,66 @@ export default async function AdminHome() {
             .lt("fecha", fin)
             .order("fecha", { ascending: true })
         : Promise.resolve({ data: [] as { perfil_id: string; tipo: string; fecha: string }[] }),
+      supabase
+        .from("categorias_config")
+        .select("categoria")
+        .eq("requiere_declaracion_diaria", true),
+      sucursalIds.length
+        ? supabase
+            .from("stock_diario_categoria")
+            .select("sucursal_id, categoria, cantidad_inicial")
+            .in("sucursal_id", sucursalIds)
+            .eq("fecha", hoy)
+        : Promise.resolve({
+            data: [] as { sucursal_id: string; categoria: string; cantidad_inicial: number }[],
+          }),
     ]);
 
+  const categoriasTrackeadas = (categoriasTrack ?? []).map((c) => c.categoria);
+
+  const productosTrackeados = categoriasTrackeadas.length
+    ? (
+        await supabase
+          .from("productos")
+          .select("id, categoria")
+          .in("categoria", categoriasTrackeadas)
+      ).data ?? []
+    : [];
+  const categoriaPorProducto = new Map(
+    productosTrackeados.map((p) => [p.id, p.categoria])
+  );
+  const productoIdsTrackeados = productosTrackeados.map((p) => p.id);
+
+  const ventaIdsHoy = (ventas ?? []).map((v) => v.id);
+  const itemsTrackeados =
+    ventaIdsHoy.length && productoIdsTrackeados.length
+      ? (
+          await supabase
+            .from("items_venta")
+            .select("venta_id, producto_id, cantidad")
+            .in("venta_id", ventaIdsHoy)
+            .in("producto_id", productoIdsTrackeados)
+        ).data ?? []
+      : [];
+
+  const sucursalPorVenta = new Map((ventas ?? []).map((v) => [v.id, v.sucursal_id]));
+
+  const vendidoHoyPorSucursal = new Map<string, Map<string, number>>();
+  for (const it of itemsTrackeados) {
+    const sucId = sucursalPorVenta.get(it.venta_id);
+    const cat = it.producto_id ? categoriaPorProducto.get(it.producto_id) : null;
+    if (!sucId || !cat) continue;
+    const mapa = vendidoHoyPorSucursal.get(sucId) ?? new Map<string, number>();
+    mapa.set(cat, (mapa.get(cat) ?? 0) + Number(it.cantidad));
+    vendidoHoyPorSucursal.set(sucId, mapa);
+  }
+
   const ultimoTipoPorPerfil = new Map<string, string>();
+  const horaEntradaPorPerfil = new Map<string, string>();
   for (const r of registros ?? []) {
     ultimoTipoPorPerfil.set(r.perfil_id, r.tipo);
+    if (r.tipo === "entrada") horaEntradaPorPerfil.set(r.perfil_id, r.fecha);
+    else horaEntradaPorPerfil.delete(r.perfil_id);
   }
   const presentes = (personal ?? []).filter(
     (p) => ultimoTipoPorPerfil.get(p.id) === "entrada"
@@ -105,7 +171,29 @@ export default async function AdminHome() {
 
     const presentesSucursal = presentes.filter((p) => p.sucursal_id === s.id);
 
-    return { sucursal: s, totalVentas, saldo, pendientes, presentesSucursal };
+    const declaradoSucursal = (declarado ?? []).filter((d) => d.sucursal_id === s.id);
+    const vendidoSucursal = vendidoHoyPorSucursal.get(s.id);
+    const stockHoy = categoriasTrackeadas.map((categoria) => {
+      const fila = declaradoSucursal.find((d) => d.categoria === categoria);
+      const cantidadInicial = fila ? Number(fila.cantidad_inicial) : null;
+      const vendido = vendidoSucursal?.get(categoria) ?? 0;
+      const restante = cantidadInicial !== null ? cantidadInicial - vendido : null;
+      return { categoria, cantidadInicial, restante };
+    });
+
+    const puedeDeclarar =
+      perfil?.rol === "superadmin" ||
+      (perfil?.rol === "encargado_sucursal" && perfil.sucursalId === s.id);
+
+    return {
+      sucursal: s,
+      totalVentas,
+      saldo,
+      pendientes,
+      presentesSucursal,
+      stockHoy,
+      puedeDeclarar,
+    };
   });
 
   const totalGeneral = resumen.reduce((a, r) => a + r.totalVentas, 0);
@@ -143,7 +231,7 @@ export default async function AdminHome() {
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {resumen.map(({ sucursal, totalVentas, saldo, pendientes, presentesSucursal }) => (
+            {resumen.map(({ sucursal, totalVentas, saldo, pendientes, presentesSucursal, stockHoy, puedeDeclarar }) => (
               <div
                 key={sucursal.id}
                 className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
@@ -190,17 +278,77 @@ export default async function AdminHome() {
                     </p>
                   ) : (
                     <ul className="mt-1 flex flex-wrap gap-1.5">
-                      {presentesSucursal.map((p) => (
-                        <li
-                          key={p.id}
-                          className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-950 dark:text-green-300"
-                        >
-                          {p.nombre}
-                        </li>
-                      ))}
+                      {presentesSucursal.map((p) => {
+                        const hora = horaEntradaPorPerfil.get(p.id);
+                        return (
+                          <li
+                            key={p.id}
+                            className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-950 dark:text-green-300"
+                          >
+                            {p.nombre}
+                            {hora && (
+                              <span className="ml-1 font-normal text-green-700 dark:text-green-400">
+                                · {new Date(hora).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </div>
+
+                {stockHoy.length > 0 && (
+                  <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Stock de hoy
+                    </p>
+                    {puedeDeclarar ? (
+                      <div className="mt-2">
+                        <DeclararStockForm
+                          sucursalId={sucursal.id}
+                          categorias={stockHoy.map((c) => ({
+                            categoria: c.categoria,
+                            cantidadInicial: c.cantidadInicial,
+                          }))}
+                        />
+                      </div>
+                    ) : (
+                      <ul className="mt-1 flex flex-col gap-1 text-sm">
+                        {stockHoy.map((c) => (
+                          <li key={c.categoria} className="flex justify-between">
+                            <span className="text-zinc-600 dark:text-zinc-400">
+                              {c.categoria}
+                            </span>
+                            <span
+                              className={
+                                c.restante === null
+                                  ? "text-zinc-400 dark:text-zinc-500"
+                                  : "font-medium text-zinc-900 dark:text-zinc-50"
+                              }
+                            >
+                              {c.restante === null ? "Sin declarar" : c.restante}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {puedeDeclarar && (
+                      <ul className="mt-2 flex flex-col gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+                        {stockHoy
+                          .filter((c) => c.restante !== null)
+                          .map((c) => (
+                            <li key={c.categoria} className="flex justify-between">
+                              <span>Restante {c.categoria}</span>
+                              <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                                {c.restante}
+                              </span>
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

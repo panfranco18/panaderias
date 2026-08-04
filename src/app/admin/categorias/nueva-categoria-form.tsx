@@ -61,6 +61,14 @@ export function NuevaCategoriaForm() {
           />
           Los empleados pueden reportar faltantes en esta categoría
         </label>
+        <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <input
+            type="checkbox"
+            name="requiere_declaracion_diaria"
+            className="rounded"
+          />
+          El encargado declara la cantidad inicial cada día (aparece en el panel inicio)
+        </label>
       </div>
 
       {state.error && (

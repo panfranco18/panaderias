@@ -12,6 +12,7 @@ type Categoria = {
   visible_web: boolean;
   imagen_url: string | null;
   permite_reportar_faltante: boolean;
+  requiere_declaracion_diaria: boolean;
 };
 
 const initialState: ActionState = {};
@@ -137,6 +138,15 @@ function CategoriaCard({
               className="rounded"
             />
             Los empleados pueden reportar faltantes en esta categoría
+          </label>
+          <label className="mt-2 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <input
+              type="checkbox"
+              name="requiere_declaracion_diaria"
+              defaultChecked={categoria.requiere_declaracion_diaria}
+              className="rounded"
+            />
+            El encargado declara la cantidad inicial cada día (aparece en el panel inicio)
           </label>
           {state.error && (
             <p className="mt-2 text-sm text-red-600 dark:text-red-400">{state.error}</p>
