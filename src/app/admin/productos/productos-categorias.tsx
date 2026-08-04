@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { StockTabla } from "./stock-tabla";
+import { ProductosList } from "./productos-list";
 import { IconX } from "@/components/admin-icons";
 import {
   iconoDeCategoria,
@@ -9,17 +9,29 @@ import {
   ordenarCategorias,
 } from "@/lib/categoria-visual";
 
-type Producto = { id: string; nombre: string; categoria: string };
-type Stock = { producto_id: string; cantidad: number; unidad: string };
+type Producto = {
+  id: string;
+  nombre: string;
+  categoria: string;
+  descripcion: string | null;
+  imagen_url: string | null;
+  precio_base: number;
+  activo: boolean;
+  codigo_barras?: string | null;
+  unidad_medida?: string;
+  stock_minimo?: number;
+};
 
-export function StockCategorias({
+type PrecioSucursal = { producto_id: string; sucursal_id: string; precio: number };
+
+export function ProductosCategorias({
   productos,
-  stock,
-  sucursalId,
+  sucursales,
+  precios,
 }: {
   productos: Producto[];
-  stock: Stock[];
-  sucursalId: string;
+  sucursales: { id: string; nombre: string }[];
+  precios: PrecioSucursal[];
 }) {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaAbierta, setCategoriaAbierta] = useState<string | null>(null);
@@ -56,10 +68,10 @@ export function StockCategorias({
               Ningún producto coincide con la búsqueda.
             </p>
           ) : (
-            <StockTabla
+            <ProductosList
               productos={resultadosBusqueda}
-              stock={stock}
-              sucursalId={sucursalId}
+              sucursales={sucursales}
+              precios={precios}
             />
           )}
         </div>
@@ -93,7 +105,7 @@ export function StockCategorias({
           onClick={() => setCategoriaAbierta(null)}
         >
           <div
-            className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-zinc-50 p-6 shadow-2xl dark:bg-zinc-950"
+            className="max-h-[85vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-zinc-50 p-6 shadow-2xl dark:bg-zinc-950"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-5 flex items-center justify-between">
@@ -109,10 +121,10 @@ export function StockCategorias({
               </button>
             </div>
 
-            <StockTabla
+            <ProductosList
               productos={porCategoria[categoriaAbierta]}
-              stock={stock}
-              sucursalId={sucursalId}
+              sucursales={sucursales}
+              precios={precios}
             />
           </div>
         </div>

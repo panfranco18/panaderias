@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NuevoProductoForm } from "./nuevo-producto-form";
-import { ProductosList } from "./productos-list";
+import { ProductosCategorias } from "./productos-categorias";
 
 export default async function ProductosPage() {
   const supabase = createAdminClient();
@@ -33,7 +33,7 @@ export default async function ProductosPage() {
       </div>
 
       <div className="mt-8">
-        <ProductosList
+        <ProductosCategorias
           productos={productos ?? []}
           sucursales={sucursales ?? []}
           precios={precios ?? []}

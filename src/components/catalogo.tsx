@@ -6,7 +6,11 @@ import { useCart } from "@/lib/cart-context";
 import { IconPackage, IconX } from "@/components/admin-icons";
 import { IconTongs } from "@/components/icons";
 import { dispatchFlyToCart } from "@/lib/fly-to-cart";
-import { iconoDeCategoria, gradienteDeCategoria } from "@/lib/categoria-visual";
+import {
+  iconoDeCategoria,
+  gradienteDeCategoria,
+  ordenarCategorias,
+} from "@/lib/categoria-visual";
 
 type Producto = {
   id: string;
@@ -80,6 +84,7 @@ export function Catalogo({
     },
     {}
   );
+  const categoriasOrdenadas = ordenarCategorias(Object.keys(porCategoria));
 
   function agregarAlCarrito(e: React.MouseEvent<HTMLButtonElement>, producto: Producto) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -118,7 +123,8 @@ export function Catalogo({
       )}
 
       <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
-        {Object.entries(porCategoria).map(([categoria, items]) => {
+        {categoriasOrdenadas.map((categoria) => {
+          const items = porCategoria[categoria];
           const Icon = iconoDeCategoria(categoria);
           const gradiente = gradienteDeCategoria(categoria);
           return (
