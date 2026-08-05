@@ -1,14 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import {
-  IconWheat,
-  IconOven,
-  IconHeart,
-  IconBread,
-  IconCupcake,
-  IconCake,
-  IconTruck,
-} from "@/components/icons";
+import { IconWheat, IconOven, IconHeart } from "@/components/icons";
 import { createClient } from "@/lib/supabase/server";
 import { Catalogo } from "@/components/catalogo";
 
@@ -27,29 +19,6 @@ const porQueElegirnos = [
     icon: IconHeart,
     title: "Recetas tradicionales",
     text: "Las mismas recetas de siempre, hechas a mano en cada sucursal.",
-  },
-];
-
-const categorias = [
-  {
-    icon: IconBread,
-    title: "Panes artesanales",
-    text: "Baguettes, campo, integral y de semillas, recién horneados.",
-  },
-  {
-    icon: IconCupcake,
-    title: "Facturas y dulces",
-    text: "Medialunas, vigilantes y facturas rellenas para cualquier hora.",
-  },
-  {
-    icon: IconCake,
-    title: "Tortas y especiales",
-    text: "Tortas por encargo para cumpleaños y ocasiones especiales.",
-  },
-  {
-    icon: IconTruck,
-    title: "Pedí y retirá",
-    text: "Hacé tu pedido online y retiralo en la sucursal que elijas.",
   },
 ];
 
@@ -85,42 +54,26 @@ export default async function Home() {
 
   return (
     <div className="flex-1">
-      <section className="relative w-full" style={{ aspectRatio: "1717 / 916" }}>
+      <section className="relative w-full" style={{ aspectRatio: "3168 / 1344" }}>
         <Image
-          src="/heropana.png"
-          alt="Panadería artesanal — panes, facturas y dulces recién horneados"
+          src="/deleiteshero.png"
+          alt="Deleites Panadería y Fiambrería — promoviendo productos pampeanos. Encontranos en Santa Rosa y Toay, La Pampa"
           fill
           priority
           className="object-cover"
           sizes="100vw"
         />
 
-        <h1 className="sr-only">El aroma que te abraza</h1>
+        <h1 className="sr-only">Promoviendo productos pampeanos</h1>
         <p className="sr-only">
-          Cada pan, cada factura, cada detalle hecho con amor para endulzar
-          tus días.
+          Panadería y fiambrería en Santa Rosa y Toay, La Pampa.
         </p>
 
         <Link
           href="#productos"
-          aria-label="Conocé nuestros productos"
-          className="absolute rounded-full outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-          style={{ left: "4.4%", top: "72.5%", width: "22%", height: "6.5%" }}
+          aria-label="Ver nuestros productos"
+          className="absolute inset-0 outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
         />
-
-        <div
-          className="absolute flex"
-          style={{ left: "0%", top: "89%", width: "100%", height: "11%" }}
-        >
-          {categorias.map((c) => (
-            <Link
-              key={c.title}
-              href="#productos"
-              aria-label={c.title}
-              className="flex-1 outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
-            />
-          ))}
-        </div>
       </section>
 
       <section className="bg-[#f5ead9] px-6 py-16 dark:bg-zinc-900">
