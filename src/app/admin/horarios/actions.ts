@@ -28,18 +28,43 @@ export async function crearTurno(
   if (!horaInicio || !horaFin) return { error: "Faltan los horarios" };
 
   const supabase = createAdminClient();
-  const { error } = await supabase.from("turnos_personal").insert({
-    perfil_id: perfilId,
-    sucursal_id: sucursalId,
-    fecha,
-    hora_inicio: horaInicio,
-    hora_fin: horaFin,
-    notas,
-  });
+  const { data: turno, error } = await supabase
+    .from("turnos_personal")
+    .insert({
+      perfil_id: perfilId,
+      sucursal_id: sucursalId,
+      fecha,
+      hora_inicio: horaInicio,
+      hora_fin: horaFin,
+      notas,
+    })
+    .select("id")
+    .single();
 
   if (error) return { error: error.message };
 
+  const { data: sucursal } = await supabase
+    .from("sucursales")
+    .select("nombre")
+    .eq("id", sucursalId)
+    .maybeSingle();
+
+  const fechaFormateada = new Date(`${fecha}T00:00:00`).toLocaleDateString("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+  await supabase.from("avisos_personal").insert({
+    mensaje: `Tenés turno el ${fechaFormateada} de ${horaInicio.slice(0, 5)} a ${horaFin.slice(0, 5)} en ${sucursal?.nombre ?? "tu sucursal"}.${notas ? ` ${notas}` : ""}`,
+    perfil_id: perfilId,
+    fecha,
+    creado_por: auth.perfil.id,
+    turno_id: turno.id,
+  });
+
   revalidatePath("/admin/horarios");
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 
