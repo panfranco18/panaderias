@@ -7,6 +7,19 @@ function hoyISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+const METODO_PAGO_LABEL: Record<string, string> = {
+  efectivo: "Efectivo",
+  posnet: "Posnet",
+  tarjeta: "Tarjeta",
+  transferencia: "Transferencia",
+  mercadopago: "Mercado Pago",
+};
+
+function labelMetodoPago(metodo: string | null) {
+  if (!metodo) return "Sin especificar";
+  return METODO_PAGO_LABEL[metodo] ?? metodo;
+}
+
 export default async function AdminHome() {
   const perfil = await getPerfilActual();
   const supabase = createAdminClient();
@@ -49,12 +62,17 @@ export default async function AdminHome() {
       sucursalIds.length
         ? supabase
             .from("ventas")
-            .select("id, sucursal_id, total")
+            .select("id, sucursal_id, total, metodo_pago")
             .in("sucursal_id", sucursalIds)
             .gte("fecha", inicio)
             .lt("fecha", fin)
         : Promise.resolve({
-            data: [] as { id: string; sucursal_id: string; total: number }[],
+            data: [] as {
+              id: string;
+              sucursal_id: string;
+              total: number;
+              metodo_pago: string | null;
+            }[],
           }),
       sucursalIds.length
         ? supabase
@@ -102,6 +120,20 @@ export default async function AdminHome() {
             data: [] as { sucursal_id: string; categoria: string; cantidad_inicial: number }[],
           }),
     ]);
+
+  const inicioMes = new Date(new Date(hoy).getFullYear(), new Date(hoy).getMonth(), 1)
+    .toISOString()
+    .slice(0, 10);
+
+  const totalProveedoresMes =
+    perfil?.rol === "superadmin"
+      ? (
+          await supabase
+            .from("facturas_proveedor")
+            .select("monto")
+            .gte("fecha", inicioMes)
+        ).data?.reduce((a, f) => a + Number(f.monto), 0) ?? 0
+      : null;
 
   const categoriasTrackeadas = (categoriasTrack ?? []).map((c) => c.categoria);
 
@@ -153,9 +185,24 @@ export default async function AdminHome() {
     (p) => ultimoTipoPorPerfil.get(p.id) === "entrada"
   );
 
+  const formasPagoGlobal = new Map<string, number>();
+  for (const v of ventas ?? []) {
+    const key = v.metodo_pago ?? "sin_especificar";
+    formasPagoGlobal.set(key, (formasPagoGlobal.get(key) ?? 0) + Number(v.total));
+  }
+
   const resumen = sucursales.map((s) => {
     const ventasSucursal = (ventas ?? []).filter((v) => v.sucursal_id === s.id);
     const totalVentas = ventasSucursal.reduce((a, v) => a + Number(v.total), 0);
+
+    const formasPagoMap = new Map<string, number>();
+    for (const v of ventasSucursal) {
+      const key = v.metodo_pago ?? "sin_especificar";
+      formasPagoMap.set(key, (formasPagoMap.get(key) ?? 0) + Number(v.total));
+    }
+    const formasPago = Array.from(formasPagoMap.entries())
+      .map(([metodo, monto]) => ({ metodo, monto }))
+      .sort((a, b) => b.monto - a.monto);
 
     const cajaSucursal = (caja ?? []).filter((c) => c.sucursal_id === s.id);
     const saldo = cajaSucursal.reduce((a, c) => {
@@ -193,6 +240,7 @@ export default async function AdminHome() {
       presentesSucursal,
       stockHoy,
       puedeDeclarar,
+      formasPago,
     };
   });
 
@@ -221,17 +269,52 @@ export default async function AdminHome() {
         </p>
       ) : (
         <>
-          <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
-              Total vendido hoy (todas las sucursales)
-            </p>
-            <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-              ${totalGeneral.toFixed(2)}
-            </p>
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                Total vendido hoy (todas las sucursales)
+              </p>
+              <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+                ${totalGeneral.toFixed(2)}
+              </p>
+            </div>
+
+            {formasPagoGlobal.size > 0 && (
+              <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                  Formas de pago hoy
+                </p>
+                <ul className="mt-2 flex flex-col gap-1 text-sm">
+                  {Array.from(formasPagoGlobal.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([metodo, monto]) => (
+                      <li key={metodo} className="flex justify-between">
+                        <span className="text-zinc-600 dark:text-zinc-400">
+                          {labelMetodoPago(metodo === "sin_especificar" ? null : metodo)}
+                        </span>
+                        <span className="font-medium text-zinc-900 dark:text-zinc-50">
+                          ${monto.toFixed(2)}
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
+
+            {totalProveedoresMes !== null && (
+              <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                  Pago a proveedores este mes
+                </p>
+                <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+                  ${totalProveedoresMes.toFixed(2)}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {resumen.map(({ sucursal, totalVentas, saldo, pendientes, presentesSucursal, stockHoy, puedeDeclarar }) => (
+            {resumen.map(({ sucursal, totalVentas, saldo, pendientes, presentesSucursal, stockHoy, puedeDeclarar, formasPago }) => (
               <div
                 key={sucursal.id}
                 className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
@@ -267,6 +350,26 @@ export default async function AdminHome() {
                     </dd>
                   </div>
                 </dl>
+
+                {formasPago.length > 0 && (
+                  <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Formas de pago hoy
+                    </p>
+                    <ul className="mt-1 flex flex-col gap-1 text-sm">
+                      {formasPago.map(({ metodo, monto }) => (
+                        <li key={metodo} className="flex justify-between">
+                          <span className="text-zinc-600 dark:text-zinc-400">
+                            {labelMetodoPago(metodo === "sin_especificar" ? null : metodo)}
+                          </span>
+                          <span className="font-medium text-zinc-900 dark:text-zinc-50">
+                            ${monto.toFixed(2)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">

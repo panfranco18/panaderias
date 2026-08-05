@@ -242,6 +242,7 @@ export function VentaBuilder({
           className="mt-3 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         >
           <option value="efectivo">Efectivo</option>
+          <option value="posnet">Posnet</option>
           <option value="tarjeta">Tarjeta</option>
           <option value="transferencia">Transferencia</option>
           <option value="mercadopago">MercadoPago</option>
