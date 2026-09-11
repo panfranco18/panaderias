@@ -23,6 +23,7 @@ type Producto = {
   codigo_barras?: string | null;
   unidad_medida?: string;
   stock_minimo?: number;
+  monto_variable?: boolean;
 };
 
 const UNIDAD_LABEL: Record<string, string> = {
@@ -140,11 +141,19 @@ function ProductoCard({
             </p>
           </div>
           <p className="whitespace-nowrap font-semibold text-zinc-900 dark:text-zinc-50">
-            ${producto.precio_base.toFixed(2)}
-            {producto.unidad_medida && producto.unidad_medida !== "unidad" && (
-              <span className="ml-0.5 text-xs font-normal text-zinc-500 dark:text-zinc-400">
-                /{UNIDAD_LABEL[producto.unidad_medida]}
+            {producto.monto_variable ? (
+              <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                Monto variable
               </span>
+            ) : (
+              <>
+                ${producto.precio_base.toFixed(2)}
+                {producto.unidad_medida && producto.unidad_medida !== "unidad" && (
+                  <span className="ml-0.5 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                    /{UNIDAD_LABEL[producto.unidad_medida]}
+                  </span>
+                )}
+              </>
             )}
           </p>
         </div>
@@ -278,6 +287,15 @@ function ProductoCard({
               <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
                 <input type="checkbox" name="activo" defaultChecked={producto.activo} className="rounded" />
                 Producto activo
+              </label>
+              <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                <input
+                  type="checkbox"
+                  name="monto_variable"
+                  defaultChecked={producto.monto_variable}
+                  className="rounded"
+                />
+                Monto variable (el cajero ingresa el importe al vender)
               </label>
             </div>
             {state.error && (

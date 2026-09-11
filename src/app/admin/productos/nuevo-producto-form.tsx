@@ -134,6 +134,10 @@ export function NuevoProductoForm({ categorias }: { categorias: string[] }) {
             className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
           />
         </div>
+        <label className="sm:col-span-2 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <input type="checkbox" name="monto_variable" className="rounded" />
+          Monto variable — al vender, el cajero ingresa el importe (ej: &quot;Varios Despensa&quot;)
+        </label>
       </div>
 
       {state.error && (

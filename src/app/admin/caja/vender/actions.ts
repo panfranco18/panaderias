@@ -8,11 +8,13 @@ import { notificarVenta } from "@/lib/notificaciones";
 const STAFF = ["superadmin", "encargado_sucursal", "empleado"] as const;
 
 export type ItemCarrito = {
+  id: string;
   productoId: string;
   nombre: string;
   cantidad: number;
   precioUnitario: number;
   unidadMedida?: string;
+  montoVariable?: boolean;
 };
 
 export type VentaCreada = {

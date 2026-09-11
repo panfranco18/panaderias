@@ -66,7 +66,7 @@ export function TicketView({
         {modo === "ticket" ? (
           <>
             {venta.items.map((it) => (
-              <div key={it.productoId} className="flex justify-between">
+              <div key={it.id} className="flex justify-between">
                 <span>
                   {etiquetaCantidad(it.cantidad, it.unidadMedida)} x {it.nombre}
                 </span>

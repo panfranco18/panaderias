@@ -46,6 +46,7 @@ export async function crearProducto(
   const codigoBarras = String(formData.get("codigo_barras") || "").trim() || null;
   const unidadMedida = String(formData.get("unidad_medida") || "unidad");
   const stockMinimo = Number(formData.get("stock_minimo") || 0);
+  const montoVariable = formData.get("monto_variable") === "on";
   const imagen = formData.get("imagen") as File | null;
 
   if (!nombre) return { error: "El nombre es obligatorio" };
@@ -69,6 +70,7 @@ export async function crearProducto(
     codigo_barras: codigoBarras,
     unidad_medida: unidadMedida,
     stock_minimo: stockMinimo,
+    monto_variable: montoVariable,
   });
 
   if (error) {
@@ -106,6 +108,7 @@ export async function actualizarProducto(
   const codigoBarras = String(formData.get("codigo_barras") || "").trim() || null;
   const unidadMedida = String(formData.get("unidad_medida") || "unidad");
   const stockMinimo = Number(formData.get("stock_minimo") || 0);
+  const montoVariable = formData.get("monto_variable") === "on";
   const imagen = formData.get("imagen") as File | null;
 
   if (!nombre) return { error: "El nombre es obligatorio" };
@@ -128,6 +131,7 @@ export async function actualizarProducto(
     codigo_barras: codigoBarras,
     unidad_medida: unidadMedida,
     stock_minimo: stockMinimo,
+    monto_variable: montoVariable,
   };
 
   try {
@@ -144,6 +148,7 @@ export async function actualizarProducto(
     if (esColumnaFaltante(error.message)) {
       delete update.codigo_barras;
       delete update.stock_minimo;
+      delete update.monto_variable;
       const { error: error2 } = await supabase
         .from("productos")
         .update(update)

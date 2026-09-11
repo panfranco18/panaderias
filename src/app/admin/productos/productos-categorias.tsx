@@ -17,6 +17,7 @@ type Producto = {
   codigo_barras?: string | null;
   unidad_medida?: string;
   stock_minimo?: number;
+  monto_variable?: boolean;
 };
 
 type PrecioSucursal = { producto_id: string; sucursal_id: string; precio: number };

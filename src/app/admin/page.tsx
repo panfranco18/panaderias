@@ -2,22 +2,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getPerfilActual } from "@/lib/auth/current-perfil";
 import { AccesosRapidos } from "./accesos-rapidos";
 import { DeclararStockForm } from "./declarar-stock-form";
+import { labelMetodoPago } from "@/lib/metodos-pago";
 
 function hoyISO() {
   return new Date().toISOString().slice(0, 10);
-}
-
-const METODO_PAGO_LABEL: Record<string, string> = {
-  efectivo: "Efectivo",
-  posnet: "Posnet",
-  tarjeta: "Tarjeta",
-  transferencia: "Transferencia",
-  mercadopago: "Mercado Pago",
-};
-
-function labelMetodoPago(metodo: string | null) {
-  if (!metodo) return "Sin especificar";
-  return METODO_PAGO_LABEL[metodo] ?? metodo;
 }
 
 export default async function AdminHome() {

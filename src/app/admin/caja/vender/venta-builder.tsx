@@ -14,6 +14,7 @@ type Producto = {
   precio_base: number;
   codigo_barras: string | null;
   unidad_medida?: string;
+  monto_variable?: boolean;
 };
 
 const UNIDAD_LABEL: Record<string, string> = {
@@ -50,6 +51,10 @@ export function VentaBuilder({
   const [ventaCompletada, setVentaCompletada] = useState<VentaCreada | null>(
     null
   );
+  const [pidiendoMontoPara, setPidiendoMontoPara] = useState<Producto | null>(
+    null
+  );
+  const [montoIngresado, setMontoIngresado] = useState("");
 
   function precioDe(producto: Producto) {
     const override = precios.find(
@@ -59,6 +64,12 @@ export function VentaBuilder({
   }
 
   function agregarProducto(producto: Producto) {
+    if (producto.monto_variable) {
+      setMontoIngresado("");
+      setPidiendoMontoPara(producto);
+      return;
+    }
+
     setCarrito((prev) => {
       const existente = prev.find((i) => i.productoId === producto.id);
       if (existente) {
@@ -69,6 +80,7 @@ export function VentaBuilder({
       return [
         ...prev,
         {
+          id: producto.id,
           productoId: producto.id,
           nombre: producto.nombre,
           cantidad: 1,
@@ -77,6 +89,29 @@ export function VentaBuilder({
         },
       ];
     });
+  }
+
+  function confirmarMontoVariable() {
+    const producto = pidiendoMontoPara;
+    if (!producto) return;
+    const monto = Number(montoIngresado);
+    if (!monto || monto <= 0) {
+      setError("Ingresá un monto mayor a 0");
+      return;
+    }
+    setError(null);
+    setCarrito((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        productoId: producto.id,
+        nombre: producto.nombre,
+        cantidad: 1,
+        precioUnitario: monto,
+        montoVariable: true,
+      },
+    ]);
+    setPidiendoMontoPara(null);
   }
 
   function agregarPorCodigoBarras(codigo: string) {
@@ -89,11 +124,17 @@ export function VentaBuilder({
     agregarProducto(producto);
   }
 
-  function actualizarCantidad(productoId: string, cantidad: number) {
+  function actualizarCantidad(id: string, cantidad: number) {
     setCarrito((prev) =>
       cantidad <= 0
-        ? prev.filter((i) => i.productoId !== productoId)
-        : prev.map((i) => (i.productoId === productoId ? { ...i, cantidad } : i))
+        ? prev.filter((i) => i.id !== id)
+        : prev.map((i) => (i.id === id ? { ...i, cantidad } : i))
+    );
+  }
+
+  function actualizarMonto(id: string, monto: number) {
+    setCarrito((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, precioUnitario: monto } : i))
     );
   }
 
@@ -173,11 +214,19 @@ export function VentaBuilder({
                 {p.nombre}
               </span>
               <span className="font-medium text-zinc-900 dark:text-zinc-50">
-                ${precioDe(p).toFixed(2)}
-                {p.unidad_medida && p.unidad_medida !== "unidad" && (
-                  <span className="text-zinc-500 dark:text-zinc-400">
-                    /{UNIDAD_LABEL[p.unidad_medida]}
+                {p.monto_variable ? (
+                  <span className="text-xs font-normal text-amber-700 dark:text-amber-400">
+                    Ingresar monto
                   </span>
+                ) : (
+                  <>
+                    ${precioDe(p).toFixed(2)}
+                    {p.unidad_medida && p.unidad_medida !== "unidad" && (
+                      <span className="text-zinc-500 dark:text-zinc-400">
+                        /{UNIDAD_LABEL[p.unidad_medida]}
+                      </span>
+                    )}
+                  </>
                 )}
               </span>
             </button>
@@ -197,30 +246,50 @@ export function VentaBuilder({
           <ul className="mt-3 flex flex-col gap-2">
             {carrito.map((it) => (
               <li
-                key={it.productoId}
+                key={it.id}
                 className="flex items-center justify-between gap-2 text-sm"
               >
                 <span className="flex-1 text-zinc-700 dark:text-zinc-300">
                   {it.nombre}
                 </span>
-                <input
-                  type="number"
-                  min={esFraccionable(it.unidadMedida) ? "0.01" : "1"}
-                  step={esFraccionable(it.unidadMedida) ? "0.01" : "1"}
-                  value={it.cantidad}
-                  onChange={(e) =>
-                    actualizarCantidad(it.productoId, Number(e.target.value))
-                  }
-                  className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-950"
-                />
-                <span className="w-8 text-xs text-zinc-500 dark:text-zinc-400">
-                  {UNIDAD_LABEL[it.unidadMedida ?? "unidad"]}
-                </span>
+                {it.montoVariable ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={it.precioUnitario}
+                      onChange={(e) =>
+                        actualizarMonto(it.id, Number(e.target.value))
+                      }
+                      className="w-24 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-950"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="number"
+                      min={esFraccionable(it.unidadMedida) ? "0.01" : "1"}
+                      step={esFraccionable(it.unidadMedida) ? "0.01" : "1"}
+                      value={it.cantidad}
+                      onChange={(e) =>
+                        actualizarCantidad(it.id, Number(e.target.value))
+                      }
+                      className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-950"
+                    />
+                    <span className="w-8 text-xs text-zinc-500 dark:text-zinc-400">
+                      {UNIDAD_LABEL[it.unidadMedida ?? "unidad"]}
+                    </span>
+                  </>
+                )}
                 <span className="w-20 text-right text-zinc-900 dark:text-zinc-50">
                   ${(it.cantidad * it.precioUnitario).toFixed(2)}
                 </span>
                 <button
-                  onClick={() => actualizarCantidad(it.productoId, 0)}
+                  onClick={() => actualizarCantidad(it.id, 0)}
                   aria-label="Quitar"
                   className="text-zinc-400 hover:text-red-600"
                 >
@@ -262,6 +331,55 @@ export function VentaBuilder({
           {pending ? "Cobrando..." : `Cobrar $${total.toFixed(2)}`}
         </button>
       </div>
+
+      {pidiendoMontoPara && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setPidiendoMontoPara(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-lg bg-white p-4 shadow-2xl dark:bg-zinc-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+              {pidiendoMontoPara.nombre}
+            </h3>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              Ingresá el importe de esta venta.
+            </p>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              autoFocus
+              value={montoIngresado}
+              onChange={(e) => setMontoIngresado(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && confirmarMontoVariable()}
+              placeholder="0.00"
+              className="mt-3 w-full rounded-md border border-zinc-300 px-3 py-2 text-lg dark:border-zinc-700 dark:bg-zinc-950"
+            />
+            {error && (
+              <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                {error}
+              </p>
+            )}
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => setPidiendoMontoPara(null)}
+                className="flex-1 rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarMontoVariable}
+                className="flex-1 rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+              >
+                Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

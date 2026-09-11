@@ -14,14 +14,17 @@ export default async function VenderPage({
       supabase.from("sucursales").select("id, nombre").order("nombre"),
       supabase
         .from("productos")
-        .select("id, nombre, categoria, precio_base, codigo_barras, unidad_medida")
+        .select(
+          "id, nombre, categoria, precio_base, codigo_barras, unidad_medida, monto_variable"
+        )
         .eq("activo", true)
         .order("nombre"),
       supabase.from("productos_precios_sucursal").select("*"),
     ]);
 
-  // codigo_barras / unidad_medida todavía pueden no existir si no se corrieron
-  // supabase/002_codigo_barras.sql y supabase/003_unidad_medida.sql
+  // codigo_barras / unidad_medida / monto_variable todavía pueden no existir si
+  // no se corrieron supabase/002_codigo_barras.sql, 003_unidad_medida.sql o
+  // 015_monto_variable.sql
   let productos = productosResult.data;
   if (productosResult.error) {
     const fallback = await supabase
@@ -33,6 +36,7 @@ export default async function VenderPage({
       ...p,
       codigo_barras: null,
       unidad_medida: "unidad",
+      monto_variable: false,
     }));
   }
 
