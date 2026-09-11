@@ -5,6 +5,7 @@ import {
   actualizarEmpleado,
   eliminarEmpleado,
   darAccesoAEmpleado,
+  resetearPasswordEmpleado,
   type ActionState,
 } from "./actions";
 import { MODULOS_ACCESO } from "./modulos";
@@ -204,6 +205,12 @@ function EmpleadoCard({
     initialState
   );
 
+  const [resetState, resetAction, resetPending] = useActionState(
+    async () => resetearPasswordEmpleado(empleado.id),
+    initialState
+  );
+  const [resetDismissed, setResetDismissed] = useState(false);
+
   if (state.ok && editando) setEditando(false);
 
   return (
@@ -230,12 +237,45 @@ function EmpleadoCard({
           >
             {editando ? "Cancelar" : "Editar"}
           </button>
+          <form action={resetAction}>
+            <button
+              type="submit"
+              disabled={resetPending}
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {resetPending ? "Generando..." : "Resetear contraseña"}
+            </button>
+          </form>
           <DeleteButton
             action={() => eliminarEmpleado(empleado.id)}
             label={deleteLabel}
           />
         </div>
       </div>
+
+      {resetState.passwordTemporal && !resetDismissed && (
+        <div className="border-t border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
+          <p className="text-sm text-amber-800 dark:text-amber-200">
+            Contraseña nueva para {nombreOverride ?? empleado.nombre}:{" "}
+            <code className="font-mono font-bold">
+              {resetState.passwordTemporal}
+            </code>{" "}
+            — copiala y compartila ahora, no se vuelve a mostrar. La contraseña
+            anterior deja de funcionar.
+          </p>
+          <button
+            onClick={() => setResetDismissed(true)}
+            className="mt-2 rounded-full bg-amber-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-amber-700"
+          >
+            Ya la copié
+          </button>
+        </div>
+      )}
+      {resetState.error && !resetDismissed && (
+        <p className="border-t border-zinc-200 p-4 text-sm text-red-600 dark:border-zinc-800 dark:text-red-400">
+          {resetState.error}
+        </p>
+      )}
 
       {editando && (
         <form

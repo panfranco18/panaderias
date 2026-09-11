@@ -183,6 +183,19 @@ export async function actualizarEmpleado(
   return { ok: true };
 }
 
+export async function resetearPasswordEmpleado(id: string): Promise<ActionState> {
+  const auth = await requireRol(["superadmin"]);
+  if ("error" in auth) return auth;
+
+  const supabase = createAdminClient();
+  const password = generarPassword();
+
+  const { error } = await supabase.auth.admin.updateUserById(id, { password });
+  if (error) return { error: error.message };
+
+  return { ok: true, passwordTemporal: password };
+}
+
 export async function eliminarEmpleado(id: string): Promise<ActionState> {
   const auth = await requireRol(["superadmin"]);
   if ("error" in auth) return auth;
