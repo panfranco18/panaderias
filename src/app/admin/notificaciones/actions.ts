@@ -28,7 +28,11 @@ export async function obtenerNotificacionesActivas(): Promise<NotificacionActiva
     .limit(30);
 
   if (perfil.rol !== "superadmin") {
-    query = query.neq("tipo", "venta_registrada").neq("tipo", "fichaje");
+    query = query
+      .neq("tipo", "venta_registrada")
+      .neq("tipo", "fichaje")
+      .neq("tipo", "cierre_x")
+      .neq("tipo", "cierre_z");
     query = perfil.sucursalId
       ? query.or(`sucursal_id.is.null,sucursal_id.eq.${perfil.sucursalId}`)
       : query.is("sucursal_id", null);

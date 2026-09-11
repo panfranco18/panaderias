@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getPerfilActual } from "@/lib/auth/current-perfil";
 import { CajaFiltros } from "./caja-filtros";
 import { NuevoMovimientoForm } from "./nuevo-movimiento-form";
 import { MovimientosList } from "./movimientos-list";
 import { ReportarFaltanteForm } from "./reportar-faltante-form";
+import { BotonCierreTurno } from "./boton-cierre-turno";
 import { hoyISO, rangoDiaAR } from "@/lib/fecha-ar";
+import { botonCierreParaAhora, CONFIG_TURNO_CAJA_DEFAULT } from "@/lib/turno-caja";
 
 export default async function CajaPage({
   searchParams,
@@ -12,6 +15,7 @@ export default async function CajaPage({
   searchParams: Promise<{ sucursal?: string; fecha?: string }>;
 }) {
   const { sucursal: sucursalParam, fecha: fechaParam } = await searchParams;
+  const perfilActual = await getPerfilActual();
   const supabase = createAdminClient();
 
   const { data: sucursales } = await supabase
@@ -53,6 +57,18 @@ export default async function CajaPage({
   );
   const saldo = totales.apertura + totales.ingresos - totales.egresos;
 
+  const esSuperadmin = perfilActual?.rol === "superadmin";
+
+  let botonCierreTipo: "x" | "z" | null = null;
+  if (!esSuperadmin && sucursalId) {
+    const { data: configTurno } = await supabase
+      .from("config_turnos_caja")
+      .select("*")
+      .eq("sucursal_id", sucursalId)
+      .maybeSingle();
+    botonCierreTipo = botonCierreParaAhora(configTurno ?? CONFIG_TURNO_CAJA_DEFAULT);
+  }
+
   return (
     <div className="p-8">
       <div className="flex items-start justify-between gap-4">
@@ -65,12 +81,17 @@ export default async function CajaPage({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Link
-            href={`/admin/caja/cierre${sucursalId ? `?sucursal=${sucursalId}` : ""}`}
-            className="flex items-center gap-1.5 rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            Cierre de caja
-          </Link>
+          {esSuperadmin && (
+            <Link
+              href={`/admin/caja/cierre${sucursalId ? `?sucursal=${sucursalId}` : ""}`}
+              className="flex items-center gap-1.5 rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Cierre de caja
+            </Link>
+          )}
+          {botonCierreTipo && sucursalId && (
+            <BotonCierreTurno sucursalId={sucursalId} tipo={botonCierreTipo} />
+          )}
           <Link
             href={`/admin/caja/vender${sucursalId ? `?sucursal=${sucursalId}` : ""}`}
             className="flex items-center gap-1.5 rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-700"

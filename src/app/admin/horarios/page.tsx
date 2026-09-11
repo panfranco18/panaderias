@@ -1,7 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getPerfilActual } from "@/lib/auth/current-perfil";
 import { HorariosFiltros } from "./horarios-filtros";
 import { NuevoTurnoForm } from "./nuevo-turno-form";
 import { TurnosList } from "./turnos-list";
+import { ConfigTurnosCajaList } from "./config-turnos-caja-list";
 import { hoyISO } from "@/lib/fecha-ar";
 
 function rangoPorPeriodo(periodo: string) {
@@ -33,18 +35,21 @@ export default async function HorariosPage({
   const periodo = periodoParam || "semana";
   const { desde, hasta } = rangoPorPeriodo(periodo);
 
+  const perfilActual = await getPerfilActual();
   const supabase = createAdminClient();
 
-  const [{ data: turnos }, { data: perfiles }, { data: sucursales }] = await Promise.all([
-    supabase
-      .from("turnos_personal")
-      .select("id, perfil_id, sucursal_id, fecha, hora_inicio, hora_fin, notas")
-      .gte("fecha", desde)
-      .lt("fecha", hasta)
-      .order("fecha"),
-    supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
-    supabase.from("sucursales").select("id, nombre").order("nombre"),
-  ]);
+  const [{ data: turnos }, { data: perfiles }, { data: sucursales }, { data: configsTurnoCaja }] =
+    await Promise.all([
+      supabase
+        .from("turnos_personal")
+        .select("id, perfil_id, sucursal_id, fecha, hora_inicio, hora_fin, notas")
+        .gte("fecha", desde)
+        .lt("fecha", hasta)
+        .order("fecha"),
+      supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
+      supabase.from("sucursales").select("id, nombre").order("nombre"),
+      supabase.from("config_turnos_caja").select("*"),
+    ]);
 
   const empleados = perfiles ?? [];
 
@@ -82,6 +87,25 @@ export default async function HorariosPage({
           </div>
         </div>
       )}
+
+      {perfilActual?.rol === "superadmin" && sucursales?.length ? (
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+            Turnos de caja por sucursal
+          </h2>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Definí el turno mañana y tarde de cada sucursal, y si el turno
+            mañana tiene botón &quot;Cierre X&quot;. Esto controla qué botón de
+            cierre le aparece al personal en Caja.
+          </p>
+          <div className="mt-4">
+            <ConfigTurnosCajaList
+              sucursales={sucursales}
+              configs={configsTurnoCaja ?? []}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

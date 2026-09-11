@@ -95,6 +95,29 @@ export async function notificarFichaje(
   });
 }
 
+export async function notificarCierreTurno(
+  supabase: Supabase,
+  params: {
+    tipo: "x" | "z";
+    sucursalId: string;
+    sucursalNombre: string;
+    nombreEmpleado: string;
+    hora: string;
+    totalVentas: number;
+    saldo: number;
+  }
+) {
+  const { tipo, sucursalId, sucursalNombre, nombreEmpleado, hora, totalVentas, saldo } = params;
+  const etiqueta = tipo === "x" ? "Cierre X (turno mañana)" : "Cierre Z (cierre del día)";
+  const mensaje = `${etiqueta} en ${sucursalNombre} — ${nombreEmpleado} a las ${formatHoraAR(hora)}. Vendido: $${totalVentas.toFixed(2)}, saldo en caja: $${saldo.toFixed(2)}.`;
+
+  await supabase.from("notificaciones").insert({
+    tipo: tipo === "x" ? "cierre_x" : "cierre_z",
+    sucursal_id: sucursalId,
+    mensaje,
+  });
+}
+
 export async function revisarStockBajo(
   supabase: Supabase,
   params: { productoId: string; sucursalId: string; cantidadNueva: number }

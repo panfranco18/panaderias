@@ -79,3 +79,42 @@ export async function eliminarTurno(id: string): Promise<ActionState> {
   revalidatePath("/admin/horarios");
   return { ok: true };
 }
+
+export async function guardarConfigTurnoCaja(
+  sucursalId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const auth = await requireRol(["superadmin"]);
+  if ("error" in auth) return auth;
+
+  const turnoMananaInicio = String(formData.get("turno_manana_inicio") || "");
+  const turnoMananaFin = String(formData.get("turno_manana_fin") || "");
+  const turnoTardeInicio = String(formData.get("turno_tarde_inicio") || "");
+  const turnoTardeFin = String(formData.get("turno_tarde_fin") || "");
+  const habilitaCierreX = formData.get("habilita_cierre_x") === "on";
+
+  if (!turnoMananaInicio || !turnoMananaFin || !turnoTardeInicio || !turnoTardeFin) {
+    return { error: "Completá los cuatro horarios" };
+  }
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("config_turnos_caja").upsert(
+    {
+      sucursal_id: sucursalId,
+      turno_manana_inicio: turnoMananaInicio,
+      turno_manana_fin: turnoMananaFin,
+      turno_tarde_inicio: turnoTardeInicio,
+      turno_tarde_fin: turnoTardeFin,
+      habilita_cierre_x: habilitaCierreX,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "sucursal_id" }
+  );
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/horarios");
+  revalidatePath("/admin/caja");
+  return { ok: true };
+}

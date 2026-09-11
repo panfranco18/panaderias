@@ -86,7 +86,11 @@ export default async function AdminLayout({
       .limit(30);
 
     if (rol !== "superadmin") {
-      query = query.neq("tipo", "venta_registrada").neq("tipo", "fichaje");
+      query = query
+        .neq("tipo", "venta_registrada")
+        .neq("tipo", "fichaje")
+        .neq("tipo", "cierre_x")
+        .neq("tipo", "cierre_z");
       query = perfil.sucursal_id
         ? query.or(`sucursal_id.is.null,sucursal_id.eq.${perfil.sucursal_id}`)
         : query.is("sucursal_id", null);

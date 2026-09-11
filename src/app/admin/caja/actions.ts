@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRolEnSucursal } from "@/lib/auth/current-perfil";
-import { notificarVenta, notificarFaltante } from "@/lib/notificaciones";
+import { notificarVenta, notificarFaltante, notificarCierreTurno } from "@/lib/notificaciones";
+import { calcularEstadoCaja } from "@/lib/estado-caja";
+import { hoyISO } from "@/lib/fecha-ar";
 
 export type ActionState = { error?: string; ok?: boolean };
 
@@ -95,6 +97,35 @@ export async function reportarFaltanteStock(
   });
 
   revalidatePath("/admin/caja");
+  return { ok: true };
+}
+
+export async function registrarCierreTurno(
+  sucursalId: string,
+  tipo: "x" | "z"
+): Promise<ActionState> {
+  const auth = await requireRolEnSucursal([...STAFF], sucursalId);
+  if ("error" in auth) return auth;
+
+  const supabase = createAdminClient();
+
+  const [{ data: sucursal }, { data: usuario }] = await Promise.all([
+    supabase.from("sucursales").select("nombre").eq("id", sucursalId).maybeSingle(),
+    supabase.from("perfiles").select("nombre").eq("id", auth.perfil.id).maybeSingle(),
+  ]);
+
+  const estado = await calcularEstadoCaja(supabase, sucursalId, hoyISO());
+
+  await notificarCierreTurno(supabase, {
+    tipo,
+    sucursalId,
+    sucursalNombre: sucursal?.nombre ?? "",
+    nombreEmpleado: usuario?.nombre ?? "Alguien",
+    hora: new Date().toISOString(),
+    totalVentas: estado.totalVentas,
+    saldo: estado.saldo,
+  });
+
   return { ok: true };
 }
 
