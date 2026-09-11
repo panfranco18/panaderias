@@ -74,13 +74,14 @@ function subtitulo(doc, texto) {
 }
 
 function parrafo(doc, texto) {
-  asegurarEspacio(doc, 24);
+  const width = doc.page.width - MARGEN * 2;
+  doc.font("Helvetica").fontSize(10.3);
+  const altura = doc.heightOfString(texto, { width, lineGap: 2 });
+  asegurarEspacio(doc, altura + 10);
   doc
-    .font("Helvetica")
-    .fontSize(10.3)
     .fillColor(COLOR.texto)
     .text(texto, MARGEN, doc.y, {
-      width: doc.page.width - MARGEN * 2,
+      width,
       align: "left",
       lineGap: 2,
     });
@@ -88,11 +89,12 @@ function parrafo(doc, texto) {
 }
 
 function lista(doc, items) {
+  const x = MARGEN + 12;
+  const width = doc.page.width - MARGEN * 2 - 12;
   doc.font("Helvetica").fontSize(10.3).fillColor(COLOR.texto);
   for (const item of items) {
-    asegurarEspacio(doc, 20);
-    const x = MARGEN + 12;
-    const width = doc.page.width - MARGEN * 2 - 12;
+    const altura = doc.heightOfString(item, { width, lineGap: 2 });
+    asegurarEspacio(doc, altura + 8);
     doc.text("•", MARGEN, doc.y, { continued: false, width: 12 });
     const yBala = doc.y;
     doc.text(item, x, yBala - doc.currentLineHeight(), { width, lineGap: 2 });
@@ -101,15 +103,15 @@ function lista(doc, items) {
 }
 
 function nota(doc, texto) {
-  asegurarEspacio(doc, 50);
   const width = doc.page.width - MARGEN * 2;
-  const x = MARGEN;
-  const yInicio = doc.y;
   doc.font("Helvetica-Bold").fontSize(9.5);
   const alturaTexto = doc.heightOfString(`Importante: ${texto}`, {
     width: width - 20,
   });
   const alturaCaja = alturaTexto + 16;
+  asegurarEspacio(doc, alturaCaja + 10);
+  const x = MARGEN;
+  const yInicio = doc.y;
   doc
     .rect(x, yInicio, width, alturaCaja)
     .fillColor(COLOR.notaFondo)
@@ -190,6 +192,8 @@ function numerarPaginas(doc) {
       .text(`${i} / ${total - 1}`, 0, doc.page.height - 40, {
         align: "center",
         width: doc.page.width,
+        height: 20,
+        lineBreak: false,
       });
   }
 }
