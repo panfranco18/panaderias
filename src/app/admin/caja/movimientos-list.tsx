@@ -2,6 +2,7 @@
 
 import { eliminarMovimientoCaja } from "./actions";
 import { DeleteButton } from "@/components/delete-button";
+import { formatHoraAR } from "@/lib/fecha-ar";
 
 type Movimiento = {
   id: string;
@@ -45,10 +46,7 @@ export function MovimientosList({ movimientos }: { movimientos: Movimiento[] }) 
                 {m.descripcion || "—"}
               </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                {new Date(m.fecha).toLocaleTimeString("es-AR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatHoraAR(m.fecha)}
               </p>
             </div>
           </div>

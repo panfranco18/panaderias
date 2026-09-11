@@ -2,10 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { HorariosFiltros } from "./horarios-filtros";
 import { NuevoTurnoForm } from "./nuevo-turno-form";
 import { TurnosList } from "./turnos-list";
-
-function hoyISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { hoyISO } from "@/lib/fecha-ar";
 
 function rangoPorPeriodo(periodo: string) {
   const hoy = new Date(`${hoyISO()}T00:00:00`);

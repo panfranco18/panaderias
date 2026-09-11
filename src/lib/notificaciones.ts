@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { formatHoraAR } from "@/lib/fecha-ar";
 
 type Supabase = ReturnType<typeof createAdminClient>;
 
@@ -68,6 +69,27 @@ export async function notificarFaltante(
 
   await supabase.from("notificaciones").insert({
     tipo: "faltante_reportado",
+    sucursal_id: sucursalId,
+    mensaje,
+  });
+}
+
+export async function notificarFichaje(
+  supabase: Supabase,
+  params: {
+    tipo: "entrada" | "salida";
+    sucursalId: string;
+    sucursalNombre: string;
+    nombreEmpleado: string;
+    hora: string;
+  }
+) {
+  const { tipo, sucursalId, sucursalNombre, nombreEmpleado, hora } = params;
+  const accion = tipo === "entrada" ? "ingresó al sistema" : "se retiró";
+  const mensaje = `${nombreEmpleado} (${sucursalNombre}) ${accion} a las ${formatHoraAR(hora)}.`;
+
+  await supabase.from("notificaciones").insert({
+    tipo: "fichaje",
     sucursal_id: sucursalId,
     mensaje,
   });

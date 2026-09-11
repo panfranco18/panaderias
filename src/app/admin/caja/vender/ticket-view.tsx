@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { VentaCreada } from "./actions";
+import { formatFechaHoraAR } from "@/lib/fecha-ar";
 
 const UNIDAD_LABEL: Record<string, string> = {
   unidad: "",
@@ -59,7 +60,7 @@ export function TicketView({
         <p className="text-center font-bold">Panadería</p>
         <p className="text-center">{venta.sucursalNombre}</p>
         <p className="mt-1 text-center">
-          {new Date(venta.fecha).toLocaleString("es-AR")}
+          {formatFechaHoraAR(venta.fecha)}
         </p>
         <div className="my-2 border-t border-dashed border-zinc-400" />
 

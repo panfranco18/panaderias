@@ -1,9 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CierreView } from "./cierre-view";
-
-function hoyISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { hoyISO, rangoDiaAR } from "@/lib/fecha-ar";
 
 export default async function CierreCajaPage({
   searchParams,
@@ -22,8 +19,7 @@ export default async function CierreCajaPage({
   const sucursal = sucursales?.find((s) => s.id === sucursalId);
 
   const hoy = hoyISO();
-  const inicio = `${hoy}T00:00:00`;
-  const fin = new Date(new Date(inicio).getTime() + 86400000).toISOString();
+  const { inicio, fin } = rangoDiaAR(hoy);
   const ahora = new Date();
 
   if (!sucursalId || !sucursal) {

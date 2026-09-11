@@ -3,12 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRolEnSucursal } from "@/lib/auth/current-perfil";
+import { hoyISO } from "@/lib/fecha-ar";
 
 export type ActionState = { error?: string; ok?: boolean };
-
-function hoyISO() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export async function declararStockDiario(
   sucursalId: string,

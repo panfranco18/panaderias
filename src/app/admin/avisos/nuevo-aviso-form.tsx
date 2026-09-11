@@ -3,12 +3,9 @@
 import { useActionState, useRef, useEffect } from "react";
 import { crearAviso, type ActionState } from "./actions";
 import { IconPlus } from "@/components/admin-icons";
+import { hoyISO } from "@/lib/fecha-ar";
 
 const initialState: ActionState = {};
-
-function hoyISO() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export function NuevoAvisoForm({
   empleados,

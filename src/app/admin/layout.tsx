@@ -3,10 +3,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminSidebarContent } from "@/components/admin-sidebar-content";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvisoBanner } from "@/components/aviso-banner";
-
-function hoyISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { hoyISO, rangoDiaAR } from "@/lib/fecha-ar";
+import { notificarFichaje } from "@/lib/notificaciones";
 
 export default async function AdminLayout({
   children,
@@ -33,8 +31,7 @@ export default async function AdminLayout({
 
   let estadoFichaje: "entrada" | "salida" | null = null;
   if (perfil?.sucursal_id) {
-    const hoyInicio = `${new Date().toISOString().slice(0, 10)}T00:00:00`;
-    const hoyFin = new Date(new Date(hoyInicio).getTime() + 86400000).toISOString();
+    const { inicio: hoyInicio, fin: hoyFin } = rangoDiaAR(hoyISO());
 
     const { count: registrosHoy } = await admin
       .from("registro_ingreso_personal")
@@ -44,10 +41,28 @@ export default async function AdminLayout({
       .lt("fecha", hoyFin);
 
     if (!registrosHoy) {
-      await admin.from("registro_ingreso_personal").insert({
-        perfil_id: perfil.id,
-        sucursal_id: perfil.sucursal_id,
+      const { data: nuevoRegistro } = await admin
+        .from("registro_ingreso_personal")
+        .insert({
+          perfil_id: perfil.id,
+          sucursal_id: perfil.sucursal_id,
+          tipo: "entrada",
+        })
+        .select("fecha")
+        .single();
+
+      const { data: sucursal } = await admin
+        .from("sucursales")
+        .select("nombre")
+        .eq("id", perfil.sucursal_id)
+        .maybeSingle();
+
+      await notificarFichaje(admin, {
         tipo: "entrada",
+        sucursalId: perfil.sucursal_id,
+        sucursalNombre: sucursal?.nombre ?? "",
+        nombreEmpleado: perfil.nombre,
+        hora: nuevoRegistro?.fecha ?? new Date().toISOString(),
       });
     }
 
@@ -71,7 +86,7 @@ export default async function AdminLayout({
       .limit(30);
 
     if (rol !== "superadmin") {
-      query = query.neq("tipo", "venta_registrada");
+      query = query.neq("tipo", "venta_registrada").neq("tipo", "fichaje");
       query = perfil.sucursal_id
         ? query.or(`sucursal_id.is.null,sucursal_id.eq.${perfil.sucursal_id}`)
         : query.is("sucursal_id", null);

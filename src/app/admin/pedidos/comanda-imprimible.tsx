@@ -1,3 +1,5 @@
+import { formatFechaHoraAR } from "@/lib/fecha-ar";
+
 type Item = {
   id: string;
   producto_id: string | null;
@@ -32,7 +34,7 @@ export function ComandaImprimible({
         <p className="text-center font-bold">COMANDA</p>
         <p className="text-center">{sucursalNombre}</p>
         <p className="mt-1 text-center">
-          {new Date().toLocaleString("es-AR")}
+          {formatFechaHoraAR(new Date().toISOString())}
         </p>
         <div className="my-2 border-t border-dashed border-zinc-400" />
 

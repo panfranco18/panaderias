@@ -3,10 +3,7 @@ import { getPerfilActual } from "@/lib/auth/current-perfil";
 import { AccesosRapidos } from "./accesos-rapidos";
 import { DeclararStockForm } from "./declarar-stock-form";
 import { labelMetodoPago } from "@/lib/metodos-pago";
-
-function hoyISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { hoyISO, rangoDiaAR, formatHoraAR, formatFechaAR } from "@/lib/fecha-ar";
 
 export default async function AdminHome() {
   const perfil = await getPerfilActual();
@@ -22,8 +19,7 @@ export default async function AdminHome() {
   const nivelAcceso = (perfilConAcceso?.nivel_acceso as Record<string, boolean>) ?? {};
 
   const hoy = hoyISO();
-  const inicio = `${hoy}T00:00:00`;
-  const fin = new Date(new Date(inicio).getTime() + 86400000).toISOString();
+  const { inicio, fin } = rangoDiaAR(hoy);
 
   const { data: sucursalesTodas } = await supabase
     .from("sucursales")
@@ -109,9 +105,7 @@ export default async function AdminHome() {
           }),
     ]);
 
-  const inicioMes = new Date(new Date(hoy).getFullYear(), new Date(hoy).getMonth(), 1)
-    .toISOString()
-    .slice(0, 10);
+  const inicioMes = `${hoy.slice(0, 8)}01`;
 
   const totalProveedoresMes =
     perfil?.rol === "superadmin"
@@ -240,7 +234,7 @@ export default async function AdminHome() {
         Panel admin
       </h1>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-        Control en vivo — {new Date().toLocaleDateString("es-AR")}
+        Control en vivo — {formatFechaAR(new Date().toISOString())}
       </p>
 
       <div className="mt-6">
@@ -379,7 +373,7 @@ export default async function AdminHome() {
                             {p.nombre}
                             {hora && (
                               <span className="ml-1 font-normal text-green-700 dark:text-green-400">
-                                · {new Date(hora).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+                                · {formatHoraAR(hora)}
                               </span>
                             )}
                           </li>

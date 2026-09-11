@@ -3,6 +3,7 @@
 import { eliminarFacturaVenta } from "./actions";
 import { DeleteButton } from "@/components/delete-button";
 import { IconReceipt } from "@/components/admin-icons";
+import { formatHoraAR } from "@/lib/fecha-ar";
 
 type Factura = {
   id: string;
@@ -39,10 +40,7 @@ export function FacturasVentaList({ facturas }: { facturas: Factura[] }) {
               </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 {f.cuit_cliente || "Consumidor final"} ·{" "}
-                {new Date(f.fecha).toLocaleTimeString("es-AR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatHoraAR(f.fecha)}
               </p>
             </div>
           </div>

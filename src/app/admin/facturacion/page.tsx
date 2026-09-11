@@ -2,10 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { FacturacionFiltros } from "./facturacion-filtros";
 import { NuevaFacturaVentaForm } from "./nueva-factura-venta-form";
 import { FacturasVentaList } from "./facturas-venta-list";
-
-function hoyISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { hoyISO, rangoDiaAR } from "@/lib/fecha-ar";
 
 export default async function FacturacionPage({
   searchParams,
@@ -23,8 +20,7 @@ export default async function FacturacionPage({
   const sucursalId = sucursalParam || sucursales?.[0]?.id;
   const fecha = fechaParam || hoyISO();
 
-  const inicio = `${fecha}T00:00:00`;
-  const fin = new Date(new Date(`${fecha}T00:00:00`).getTime() + 86400000).toISOString();
+  const { inicio, fin } = rangoDiaAR(fecha);
 
   const { data: facturas } = sucursalId
     ? await supabase

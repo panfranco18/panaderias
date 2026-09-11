@@ -1,15 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ReportesFiltros } from "./reportes-filtros";
-
-function hoyISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { hoyISO, rangoDiaAR } from "@/lib/fecha-ar";
 
 function inicioPorPeriodo(periodo: string) {
-  const hoy = new Date(`${hoyISO()}T00:00:00`);
   const dias = periodo === "mes" ? 29 : periodo === "semana" ? 6 : 0;
-  const inicio = new Date(hoy.getTime() - dias * 86400000);
-  return inicio.toISOString();
+  const { inicio: hoyInicio } = rangoDiaAR(hoyISO());
+  return new Date(new Date(hoyInicio).getTime() - dias * 86400000).toISOString();
 }
 
 export default async function ReportesPage({
@@ -29,7 +25,7 @@ export default async function ReportesPage({
   const sucursalId = sucursalParam || sucursales?.[0]?.id;
 
   const inicio = inicioPorPeriodo(periodo);
-  const fin = new Date(new Date(`${hoyISO()}T00:00:00`).getTime() + 86400000).toISOString();
+  const { fin } = rangoDiaAR(hoyISO());
 
   const { data: ventas } = sucursalId
     ? await supabase

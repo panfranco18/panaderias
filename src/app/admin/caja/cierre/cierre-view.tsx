@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { labelMetodoPago } from "@/lib/metodos-pago";
+import { formatHoraAR, formatFechaHoraAR } from "@/lib/fecha-ar";
 
 type FormaPago = { metodo: string | null; monto: number };
 type Gasto = { tipo: string; monto: number; descripcion: string | null; fecha: string };
@@ -32,7 +33,6 @@ export function CierreView({
   personalEnTurno: PersonalTurno[];
 }) {
   const router = useRouter();
-  const fechaGenerado = new Date(generadoEn);
 
   return (
     <div className="p-8">
@@ -86,7 +86,7 @@ export function CierreView({
           {sucursalNombre}
         </p>
         <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
-          {fechaGenerado.toLocaleString("es-AR")}
+          {formatFechaHoraAR(generadoEn)}
         </p>
 
         <div className="my-3 border-t border-dashed border-zinc-300 dark:border-zinc-700" />
@@ -102,12 +102,7 @@ export function CierreView({
               <li key={p.nombre} className="flex justify-between">
                 <span>{p.nombre}</span>
                 <span className="text-zinc-500 dark:text-zinc-400">
-                  {p.hora
-                    ? new Date(p.hora).toLocaleTimeString("es-AR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : ""}
+                  {p.hora ? formatHoraAR(p.hora) : ""}
                 </span>
               </li>
             ))}
@@ -167,11 +162,7 @@ export function CierreView({
               {gastos.map((g, i) => (
                 <li key={i} className="flex justify-between">
                   <span>
-                    {new Date(g.fecha).toLocaleTimeString("es-AR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
-                    — {g.descripcion || "Sin descripción"}
+                    {formatHoraAR(g.fecha)} — {g.descripcion || "Sin descripción"}
                   </span>
                   <span>${Number(g.monto).toFixed(2)}</span>
                 </li>

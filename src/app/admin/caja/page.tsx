@@ -4,10 +4,7 @@ import { CajaFiltros } from "./caja-filtros";
 import { NuevoMovimientoForm } from "./nuevo-movimiento-form";
 import { MovimientosList } from "./movimientos-list";
 import { ReportarFaltanteForm } from "./reportar-faltante-form";
-
-function hoyISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { hoyISO, rangoDiaAR } from "@/lib/fecha-ar";
 
 export default async function CajaPage({
   searchParams,
@@ -31,8 +28,7 @@ export default async function CajaPage({
   const sucursalId = sucursalParam || sucursales?.[0]?.id;
   const fecha = fechaParam || hoyISO();
 
-  const inicio = `${fecha}T00:00:00`;
-  const fin = new Date(new Date(`${fecha}T00:00:00`).getTime() + 86400000).toISOString();
+  const { inicio, fin } = rangoDiaAR(fecha);
 
   const { data: movimientos } = sucursalId
     ? await supabase

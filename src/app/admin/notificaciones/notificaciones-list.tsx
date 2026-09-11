@@ -1,13 +1,15 @@
 "use client";
 
 import { useTransition } from "react";
-import { IconAlertTriangle, IconTag, IconReceipt } from "@/components/admin-icons";
+import { IconAlertTriangle, IconTag, IconReceipt, IconClock } from "@/components/admin-icons";
 import { marcarNotificacionLeida } from "./actions";
+import { formatFechaHoraAR } from "@/lib/fecha-ar";
 
 function iconoNotificacion(tipo: string) {
   if (tipo === "stock_bajo") return { Icon: IconAlertTriangle, color: "text-red-600 dark:text-red-400" };
   if (tipo === "faltante_reportado") return { Icon: IconAlertTriangle, color: "text-orange-600 dark:text-orange-400" };
   if (tipo === "venta_registrada") return { Icon: IconReceipt, color: "text-green-600 dark:text-green-400" };
+  if (tipo === "fichaje") return { Icon: IconClock, color: "text-blue-600 dark:text-blue-400" };
   return { Icon: IconTag, color: "text-amber-600 dark:text-amber-400" };
 }
 
@@ -58,7 +60,7 @@ export function NotificacionesList({
               <p className="text-sm text-zinc-800 dark:text-zinc-200">{n.mensaje}</p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 {sucursalNombre(n.sucursal_id)} ·{" "}
-                {new Date(n.created_at).toLocaleString("es-AR")}
+                {formatFechaHoraAR(n.created_at)}
               </p>
             </div>
             {!n.leida && (
