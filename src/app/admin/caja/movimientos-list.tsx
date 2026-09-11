@@ -17,6 +17,7 @@ const TIPO_COLOR: Record<string, string> = {
   ingreso: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
   egreso: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
   cierre: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
+  deposito: "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300",
 };
 
 export function MovimientosList({ movimientos }: { movimientos: Movimiento[] }) {

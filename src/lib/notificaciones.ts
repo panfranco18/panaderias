@@ -137,6 +137,25 @@ export async function notificarCierreDemorado(
   });
 }
 
+export async function notificarDeposito(
+  supabase: Supabase,
+  params: {
+    sucursalId: string;
+    sucursalNombre: string;
+    nombreEmpleado: string;
+    monto: number;
+  }
+) {
+  const { sucursalId, sucursalNombre, nombreEmpleado, monto } = params;
+  const mensaje = `${nombreEmpleado} (${sucursalNombre}) depositó $${monto.toFixed(2)} del efectivo de hoy.`;
+
+  await supabase.from("notificaciones").insert({
+    tipo: "deposito",
+    sucursal_id: sucursalId,
+    mensaje,
+  });
+}
+
 export async function revisarStockBajo(
   supabase: Supabase,
   params: { productoId: string; sucursalId: string; cantidadNueva: number }

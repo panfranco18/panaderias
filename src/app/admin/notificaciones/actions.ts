@@ -33,7 +33,8 @@ export async function obtenerNotificacionesActivas(): Promise<NotificacionActiva
       .neq("tipo", "fichaje")
       .neq("tipo", "cierre_x")
       .neq("tipo", "cierre_z")
-      .neq("tipo", "cierre_demorado");
+      .neq("tipo", "cierre_demorado")
+      .neq("tipo", "deposito");
     query = perfil.sucursalId
       ? query.or(`sucursal_id.is.null,sucursal_id.eq.${perfil.sucursalId}`)
       : query.is("sucursal_id", null);

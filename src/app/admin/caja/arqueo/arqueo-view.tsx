@@ -6,7 +6,14 @@ import { labelMetodoPago } from "@/lib/metodos-pago";
 import { formatFechaHoraAR } from "@/lib/fecha-ar";
 
 type FormaPago = { metodo: string | null; monto: number };
-type Seccion = { clave: string; etiqueta: string; formasPago: FormaPago[]; total: number };
+type Extra = { etiqueta: string; monto: number; signo: "+" | "-" | null };
+type Seccion = {
+  clave: string;
+  etiqueta: string;
+  formasPago: FormaPago[];
+  extras: Extra[];
+  total: number;
+};
 
 export function ArqueoView({
   sucursales,
@@ -95,6 +102,15 @@ export function ArqueoView({
                   </li>
                 ))}
               </ul>
+              {s.extras.map((e) => (
+                <div key={e.etiqueta} className="mt-1 flex justify-between">
+                  <span className="text-zinc-600 dark:text-zinc-400">{e.etiqueta}</span>
+                  <span>
+                    {e.signo === "-" ? "-" : e.signo === "+" ? "+" : ""}$
+                    {e.monto.toFixed(2)}
+                  </span>
+                </div>
+              ))}
               <div className="mt-1 flex justify-between font-semibold">
                 <span>Subtotal {s.etiqueta}</span>
                 <span>${s.total.toFixed(2)}</span>

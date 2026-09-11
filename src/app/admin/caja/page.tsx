@@ -6,6 +6,7 @@ import { NuevoMovimientoForm } from "./nuevo-movimiento-form";
 import { MovimientosList } from "./movimientos-list";
 import { ReportarFaltanteForm } from "./reportar-faltante-form";
 import { BotonCierreTurno } from "./boton-cierre-turno";
+import { DepositarButton } from "./depositar-button";
 import { AvisoCierreProximo } from "./aviso-cierre-proximo";
 import { hoyISO, rangoDiaAR } from "@/lib/fecha-ar";
 import { botonCierreParaAhora, CONFIG_TURNO_CAJA_DEFAULT } from "@/lib/turno-caja";
@@ -52,11 +53,12 @@ export default async function CajaPage({
       if (m.tipo === "ingreso") acc.ingresos += monto;
       if (m.tipo === "egreso") acc.egresos += monto;
       if (m.tipo === "cierre") acc.cierre += monto;
+      if (m.tipo === "deposito") acc.depositos += monto;
       return acc;
     },
-    { apertura: 0, ingresos: 0, egresos: 0, cierre: 0 }
+    { apertura: 0, ingresos: 0, egresos: 0, cierre: 0, depositos: 0 }
   );
-  const saldo = totales.apertura + totales.ingresos - totales.egresos;
+  const saldo = totales.apertura + totales.ingresos - totales.egresos - totales.depositos;
 
   const esSuperadmin = perfilActual?.rol === "superadmin";
 
@@ -121,6 +123,7 @@ export default async function CajaPage({
               Arqueo de caja
             </Link>
           )}
+          {sucursalId && <DepositarButton sucursalId={sucursalId} />}
           <Link
             href={`/admin/caja/vender${sucursalId ? `?sucursal=${sucursalId}` : ""}`}
             className="flex items-center gap-1.5 rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-700"
@@ -140,10 +143,11 @@ export default async function CajaPage({
         </p>
       ) : (
         <>
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-6">
             <ResumenCard label="Apertura" valor={totales.apertura} />
             <ResumenCard label="Ingresos" valor={totales.ingresos} color="text-green-600 dark:text-green-400" />
             <ResumenCard label="Egresos" valor={totales.egresos} color="text-red-600 dark:text-red-400" />
+            <ResumenCard label="Depósitos" valor={totales.depositos} color="text-blue-600 dark:text-blue-400" />
             <ResumenCard label="Cierre" valor={totales.cierre} />
             <ResumenCard label="Saldo calculado" valor={saldo} destacado />
           </div>

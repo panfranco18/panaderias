@@ -11,9 +11,10 @@ export type PersonalTurno = { nombre: string; hora: string | null };
 export type EstadoCaja = {
   formasPago: FormaPago[];
   totalVentas: number;
-  totales: { apertura: number; ingresos: number; egresos: number; cierre: number };
+  totales: { apertura: number; ingresos: number; egresos: number; cierre: number; depositos: number };
   saldo: number;
   gastos: Gasto[];
+  depositosDelDia: Gasto[];
   personalEnTurno: PersonalTurno[];
   ventasTarde?: { formasPago: FormaPago[]; total: number };
 };
@@ -72,13 +73,15 @@ export async function calcularEstadoCaja(
       if (m.tipo === "ingreso") acc.ingresos += monto;
       if (m.tipo === "egreso") acc.egresos += monto;
       if (m.tipo === "cierre") acc.cierre += monto;
+      if (m.tipo === "deposito") acc.depositos += monto;
       return acc;
     },
-    { apertura: 0, ingresos: 0, egresos: 0, cierre: 0 }
+    { apertura: 0, ingresos: 0, egresos: 0, cierre: 0, depositos: 0 }
   );
-  const saldo = totales.apertura + totales.ingresos - totales.egresos;
+  const saldo = totales.apertura + totales.ingresos - totales.egresos - totales.depositos;
 
   const gastos = (movimientos ?? []).filter((m) => m.tipo === "egreso");
+  const depositosDelDia = (movimientos ?? []).filter((m) => m.tipo === "deposito");
 
   const ultimoTipoPorPerfil = new Map<string, string>();
   const horaEntradaPorPerfil = new Map<string, string>();
@@ -110,5 +113,5 @@ export async function calcularEstadoCaja(
     };
   }
 
-  return { formasPago, totalVentas, totales, saldo, gastos, personalEnTurno, ventasTarde };
+  return { formasPago, totalVentas, totales, saldo, gastos, depositosDelDia, personalEnTurno, ventasTarde };
 }

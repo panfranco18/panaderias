@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { IconAlertTriangle, IconTag, IconReceipt, IconClock } from "@/components/admin-icons";
+import { IconAlertTriangle, IconTag, IconReceipt, IconClock, IconWallet } from "@/components/admin-icons";
 import { marcarNotificacionLeida } from "./actions";
 import { formatFechaHoraAR } from "@/lib/fecha-ar";
 
@@ -12,6 +12,7 @@ function iconoNotificacion(tipo: string) {
   if (tipo === "fichaje") return { Icon: IconClock, color: "text-blue-600 dark:text-blue-400" };
   if (tipo === "cierre_x" || tipo === "cierre_z") return { Icon: IconReceipt, color: "text-purple-600 dark:text-purple-400" };
   if (tipo === "cierre_demorado") return { Icon: IconAlertTriangle, color: "text-orange-600 dark:text-orange-400" };
+  if (tipo === "deposito") return { Icon: IconWallet, color: "text-blue-600 dark:text-blue-400" };
   return { Icon: IconTag, color: "text-amber-600 dark:text-amber-400" };
 }
 

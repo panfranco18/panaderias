@@ -8,6 +8,7 @@ import {
   notificarFaltante,
   notificarCierreTurno,
   notificarCierreDemorado,
+  notificarDeposito,
 } from "@/lib/notificaciones";
 import { calcularEstadoCaja } from "@/lib/estado-caja";
 import { hoyISO } from "@/lib/fecha-ar";
@@ -122,12 +123,22 @@ export async function registrarCierreTurno(
 
   const estado = await calcularEstadoCaja(supabase, sucursalId, hoyISO());
 
-  await supabase.from("cierres_turno").insert({
+  const { error: cierreError } = await supabase.from("cierres_turno").insert({
     sucursal_id: sucursalId,
     tipo,
     fecha: hoyISO(),
     perfil_id: auth.perfil.id,
+    total_ventas: estado.totalVentas,
   });
+  // total_ventas puede no existir todavía si no se corrió supabase/019_arqueo_total_cierre_x.sql
+  if (cierreError?.message.includes("total_ventas")) {
+    await supabase.from("cierres_turno").insert({
+      sucursal_id: sucursalId,
+      tipo,
+      fecha: hoyISO(),
+      perfil_id: auth.perfil.id,
+    });
+  }
 
   await notificarCierreTurno(supabase, {
     tipo,
@@ -166,6 +177,43 @@ export async function avisarCierreDemorado(sucursalId: string): Promise<ActionSt
     horaFinTurno: config?.turno_manana_fin ?? CONFIG_TURNO_CAJA_DEFAULT.turno_manana_fin,
   });
 
+  return { ok: true };
+}
+
+export async function registrarDeposito(
+  sucursalId: string,
+  monto: number
+): Promise<ActionState> {
+  if (!monto || monto <= 0) return { error: "El monto debe ser mayor a 0" };
+
+  const auth = await requireRolEnSucursal([...STAFF], sucursalId);
+  if ("error" in auth) return auth;
+
+  const supabase = createAdminClient();
+
+  const [{ data: sucursal }, { data: usuario }] = await Promise.all([
+    supabase.from("sucursales").select("nombre").eq("id", sucursalId).maybeSingle(),
+    supabase.from("perfiles").select("nombre").eq("id", auth.perfil.id).maybeSingle(),
+  ]);
+
+  const { error } = await supabase.from("caja_movimientos").insert({
+    sucursal_id: sucursalId,
+    tipo: "deposito",
+    monto,
+    descripcion: `Depósito de efectivo — ${usuario?.nombre ?? "Alguien"}`,
+    usuario_id: auth.perfil.id,
+  });
+  if (error) return { error: error.message };
+
+  await notificarDeposito(supabase, {
+    sucursalId,
+    sucursalNombre: sucursal?.nombre ?? "",
+    nombreEmpleado: usuario?.nombre ?? "Alguien",
+    monto,
+  });
+
+  revalidatePath("/admin/caja");
+  revalidatePath("/admin/caja/arqueo");
   return { ok: true };
 }
 

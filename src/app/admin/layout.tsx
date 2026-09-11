@@ -91,7 +91,8 @@ export default async function AdminLayout({
         .neq("tipo", "fichaje")
         .neq("tipo", "cierre_x")
         .neq("tipo", "cierre_z")
-        .neq("tipo", "cierre_demorado");
+        .neq("tipo", "cierre_demorado")
+        .neq("tipo", "deposito");
       query = perfil.sucursal_id
         ? query.or(`sucursal_id.is.null,sucursal_id.eq.${perfil.sucursal_id}`)
         : query.is("sucursal_id", null);

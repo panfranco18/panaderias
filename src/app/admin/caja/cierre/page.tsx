@@ -57,6 +57,7 @@ export default async function CierreCajaPage({
       totales={estado.totales}
       saldo={estado.saldo}
       gastos={estado.gastos}
+      depositosDelDia={estado.depositosDelDia}
       personalEnTurno={estado.personalEnTurno}
       ventasTarde={estado.ventasTarde}
     />

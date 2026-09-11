@@ -27,6 +27,7 @@ export function CierreView({
   totales,
   saldo,
   gastos,
+  depositosDelDia,
   personalEnTurno,
   ventasTarde,
 }: {
@@ -37,9 +38,10 @@ export function CierreView({
   tipo?: "x" | "z" | null;
   formasPago: FormaPago[];
   totalVentas: number;
-  totales: { apertura: number; ingresos: number; egresos: number; cierre: number };
+  totales: { apertura: number; ingresos: number; egresos: number; cierre: number; depositos: number };
   saldo: number;
   gastos: Gasto[];
+  depositosDelDia: Gasto[];
   personalEnTurno: PersonalTurno[];
   ventasTarde?: VentasTarde;
 }) {
@@ -194,6 +196,10 @@ export function CierreView({
             <span>-${totales.egresos.toFixed(2)}</span>
           </li>
           <li className="flex justify-between">
+            <span>Depósitos</span>
+            <span>-${totales.depositos.toFixed(2)}</span>
+          </li>
+          <li className="flex justify-between">
             <span>Cierre registrado</span>
             <span>${totales.cierre.toFixed(2)}</span>
           </li>
@@ -211,6 +217,24 @@ export function CierreView({
                     {formatHoraAR(g.fecha)} — {g.descripcion || "Sin descripción"}
                   </span>
                   <span>${Number(g.monto).toFixed(2)}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {depositosDelDia.length > 0 && (
+          <>
+            <p className="mt-3 text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+              Detalle de depósitos de hoy
+            </p>
+            <ul className="mt-1 flex flex-col gap-0.5 text-xs">
+              {depositosDelDia.map((d, i) => (
+                <li key={i} className="flex justify-between">
+                  <span>
+                    {formatHoraAR(d.fecha)} — {d.descripcion || "Sin descripción"}
+                  </span>
+                  <span>${Number(d.monto).toFixed(2)}</span>
                 </li>
               ))}
             </ul>
