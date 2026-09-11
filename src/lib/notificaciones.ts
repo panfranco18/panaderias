@@ -118,6 +118,25 @@ export async function notificarCierreTurno(
   });
 }
 
+export async function notificarCierreDemorado(
+  supabase: Supabase,
+  params: {
+    sucursalId: string;
+    sucursalNombre: string;
+    nombreEmpleado: string;
+    horaFinTurno: string;
+  }
+) {
+  const { sucursalId, sucursalNombre, nombreEmpleado, horaFinTurno } = params;
+  const mensaje = `${nombreEmpleado} (${sucursalNombre}) todavía no hizo el Cierre X — el turno mañana termina a las ${horaFinTurno.slice(0, 5)}, puede que lo haga un poco más tarde.`;
+
+  await supabase.from("notificaciones").insert({
+    tipo: "cierre_demorado",
+    sucursal_id: sucursalId,
+    mensaje,
+  });
+}
+
 export async function revisarStockBajo(
   supabase: Supabase,
   params: { productoId: string; sucursalId: string; cantidadNueva: number }

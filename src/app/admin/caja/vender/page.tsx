@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getPerfilActual } from "@/lib/auth/current-perfil";
 import { VentaBuilder } from "./venta-builder";
 
 export default async function VenderPage({
@@ -7,9 +8,10 @@ export default async function VenderPage({
   searchParams: Promise<{ sucursal?: string }>;
 }) {
   const { sucursal: sucursalParam } = await searchParams;
+  const perfilActual = await getPerfilActual();
   const supabase = createAdminClient();
 
-  const [{ data: sucursales }, productosResult, { data: precios }] =
+  const [{ data: sucursales }, productosResult, { data: precios }, { data: perfilInfo }] =
     await Promise.all([
       supabase.from("sucursales").select("id, nombre").order("nombre"),
       supabase
@@ -20,6 +22,9 @@ export default async function VenderPage({
         .eq("activo", true)
         .order("nombre"),
       supabase.from("productos_precios_sucursal").select("*"),
+      perfilActual
+        ? supabase.from("perfiles").select("nombre").eq("id", perfilActual.id).maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
 
   // codigo_barras / unidad_medida / monto_variable todavía pueden no existir si
@@ -68,6 +73,7 @@ export default async function VenderPage({
           sucursalIdInicial={sucursalId!}
           productos={productos}
           precios={precios ?? []}
+          nombreEmpleado={perfilInfo?.nombre ?? "Vos"}
         />
       )}
     </div>

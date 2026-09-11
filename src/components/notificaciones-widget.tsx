@@ -17,6 +17,7 @@ function iconoNotificacion(tipo: string) {
   if (tipo === "venta_registrada") return { Icon: IconReceipt, color: "text-green-600 dark:text-green-400" };
   if (tipo === "fichaje") return { Icon: IconClock, color: "text-blue-600 dark:text-blue-400" };
   if (tipo === "cierre_x" || tipo === "cierre_z") return { Icon: IconReceipt, color: "text-purple-600 dark:text-purple-400" };
+  if (tipo === "cierre_demorado") return { Icon: IconAlertTriangle, color: "text-orange-600 dark:text-orange-400" };
   return { Icon: IconTag, color: "text-amber-600 dark:text-amber-400" };
 }
 import {

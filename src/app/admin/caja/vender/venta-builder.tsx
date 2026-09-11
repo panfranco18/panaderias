@@ -35,17 +35,24 @@ export function VentaBuilder({
   sucursalIdInicial,
   productos,
   precios,
+  nombreEmpleado,
 }: {
   sucursales: { id: string; nombre: string }[];
   sucursalIdInicial: string;
   productos: Producto[];
   precios: Precio[];
+  nombreEmpleado: string;
 }) {
   const router = useRouter();
   const [sucursalId, setSucursalId] = useState(sucursalIdInicial);
   const [busqueda, setBusqueda] = useState("");
   const [carrito, setCarrito] = useState<ItemCarrito[]>([]);
   const [metodoPago, setMetodoPago] = useState("efectivo");
+  const [esVenta1, setEsVenta1] = useState(false);
+  const [esVentaDeleite, setEsVentaDeleite] = useState(false);
+  const [avisoVentaTipo, setAvisoVentaTipo] = useState<"ninguna" | "ambas" | null>(
+    null
+  );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ventaCompletada, setVentaCompletada] = useState<VentaCreada | null>(
@@ -150,10 +157,24 @@ export function VentaBuilder({
   }, [busqueda, productos]);
 
   async function cobrar() {
+    if (!esVenta1 && !esVentaDeleite) {
+      setAvisoVentaTipo("ninguna");
+      return;
+    }
+    if (esVenta1 && esVentaDeleite) {
+      setAvisoVentaTipo("ambas");
+      return;
+    }
+
     setPending(true);
     setError(null);
 
-    const result = await crearVenta({ sucursalId, metodoPago, items: carrito });
+    const result = await crearVenta({
+      sucursalId,
+      metodoPago,
+      ventaTipo: esVenta1 ? "venta_1" : "venta_deleite",
+      items: carrito,
+    });
 
     setPending(false);
 
@@ -164,6 +185,8 @@ export function VentaBuilder({
 
     setVentaCompletada(result.venta);
     setCarrito([]);
+    setEsVenta1(false);
+    setEsVentaDeleite(false);
   }
 
   if (ventaCompletada) {
@@ -317,6 +340,27 @@ export function VentaBuilder({
           <option value="mercadopago">MercadoPago</option>
         </select>
 
+        <div className="mt-3 flex items-center gap-4 rounded-md border border-zinc-200 px-3 py-2 dark:border-zinc-700">
+          <label className="flex items-center gap-1.5 text-sm text-zinc-700 dark:text-zinc-300">
+            <input
+              type="checkbox"
+              checked={esVenta1}
+              onChange={(e) => setEsVenta1(e.target.checked)}
+              className="rounded"
+            />
+            Venta 1
+          </label>
+          <label className="flex items-center gap-1.5 text-sm text-zinc-700 dark:text-zinc-300">
+            <input
+              type="checkbox"
+              checked={esVentaDeleite}
+              onChange={(e) => setEsVentaDeleite(e.target.checked)}
+              className="rounded"
+            />
+            Venta Deleite
+          </label>
+        </div>
+
         {error && (
           <p className="mt-2 text-sm text-red-600 dark:text-red-400">
             {error}
@@ -377,6 +421,33 @@ export function VentaBuilder({
                 Agregar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {avisoVentaTipo && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setAvisoVentaTipo(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-lg bg-white p-5 shadow-2xl dark:bg-zinc-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+              {nombreEmpleado}
+            </h3>
+            <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
+              {avisoVentaTipo === "ninguna"
+                ? "Por favor, no te olvides de tildar o Venta 1 o Venta Deleites, ¡gracias!!"
+                : "Por favor, optá por alguna de las dos, las dos no pueden tildarse, ¡muchas gracias!!!"}
+            </p>
+            <button
+              onClick={() => setAvisoVentaTipo(null)}
+              className="mt-4 w-full rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+            >
+              Entendido
+            </button>
           </div>
         </div>
       )}

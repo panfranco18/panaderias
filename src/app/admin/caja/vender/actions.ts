@@ -33,10 +33,14 @@ export type CrearVentaResult =
 export async function crearVenta(input: {
   sucursalId: string;
   metodoPago: string;
+  ventaTipo: "venta_1" | "venta_deleite";
   items: ItemCarrito[];
 }): Promise<CrearVentaResult> {
   if (!input.sucursalId) return { error: "Falta la sucursal" };
   if (!input.items?.length) return { error: "El carrito está vacío" };
+  if (input.ventaTipo !== "venta_1" && input.ventaTipo !== "venta_deleite") {
+    return { error: "Elegí Venta 1 o Venta Deleite" };
+  }
 
   const auth = await requireRolEnSucursal([...STAFF], input.sucursalId);
   if ("error" in auth) return auth;
@@ -54,7 +58,7 @@ export async function crearVenta(input: {
     0
   );
 
-  const { data: venta, error: ventaError } = await supabase
+  let { data: venta, error: ventaError } = await supabase
     .from("ventas")
     .insert({
       sucursal_id: input.sucursalId,
@@ -62,11 +66,29 @@ export async function crearVenta(input: {
       usuario_id: auth.perfil.id,
       total,
       metodo_pago: input.metodoPago || null,
+      venta_tipo: input.ventaTipo,
     })
     .select()
     .single();
 
-  if (ventaError) return { error: ventaError.message };
+  // venta_tipo todavía puede no existir si no se corrió supabase/018_arqueo_y_avisos_cierre.sql
+  if (ventaError && ventaError.message.includes("venta_tipo")) {
+    const retry = await supabase
+      .from("ventas")
+      .insert({
+        sucursal_id: input.sucursalId,
+        origen: "sucursal",
+        usuario_id: auth.perfil.id,
+        total,
+        metodo_pago: input.metodoPago || null,
+      })
+      .select()
+      .single();
+    venta = retry.data;
+    ventaError = retry.error;
+  }
+
+  if (ventaError || !venta) return { error: ventaError?.message ?? "No se pudo crear la venta" };
 
   const itemsPayload = input.items.map((it) => ({
     venta_id: venta.id,

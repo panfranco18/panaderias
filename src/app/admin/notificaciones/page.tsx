@@ -17,7 +17,8 @@ export default async function NotificacionesPage() {
       .neq("tipo", "venta_registrada")
       .neq("tipo", "fichaje")
       .neq("tipo", "cierre_x")
-      .neq("tipo", "cierre_z");
+      .neq("tipo", "cierre_z")
+      .neq("tipo", "cierre_demorado");
     query = perfil.sucursalId
       ? query.or(`sucursal_id.is.null,sucursal_id.eq.${perfil.sucursalId}`)
       : query.is("sucursal_id", null);

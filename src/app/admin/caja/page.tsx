@@ -6,6 +6,7 @@ import { NuevoMovimientoForm } from "./nuevo-movimiento-form";
 import { MovimientosList } from "./movimientos-list";
 import { ReportarFaltanteForm } from "./reportar-faltante-form";
 import { BotonCierreTurno } from "./boton-cierre-turno";
+import { AvisoCierreProximo } from "./aviso-cierre-proximo";
 import { hoyISO, rangoDiaAR } from "@/lib/fecha-ar";
 import { botonCierreParaAhora, CONFIG_TURNO_CAJA_DEFAULT } from "@/lib/turno-caja";
 
@@ -60,13 +61,33 @@ export default async function CajaPage({
   const esSuperadmin = perfilActual?.rol === "superadmin";
 
   let botonCierreTipo: "x" | "z" | null = null;
+  let configTurno = CONFIG_TURNO_CAJA_DEFAULT;
+  let cierreXHechoHoy = false;
+  let nombreEmpleado = "Vos";
+
   if (!esSuperadmin && sucursalId) {
-    const { data: configTurno } = await supabase
-      .from("config_turnos_caja")
-      .select("*")
-      .eq("sucursal_id", sucursalId)
-      .maybeSingle();
-    botonCierreTipo = botonCierreParaAhora(configTurno ?? CONFIG_TURNO_CAJA_DEFAULT);
+    const hoy = hoyISO();
+    const [{ data: configData }, { count: cierresX }, { data: perfilInfo }] = await Promise.all([
+      supabase
+        .from("config_turnos_caja")
+        .select("*")
+        .eq("sucursal_id", sucursalId)
+        .maybeSingle(),
+      supabase
+        .from("cierres_turno")
+        .select("id", { count: "exact", head: true })
+        .eq("sucursal_id", sucursalId)
+        .eq("fecha", hoy)
+        .eq("tipo", "x"),
+      perfilActual
+        ? supabase.from("perfiles").select("nombre").eq("id", perfilActual.id).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+
+    configTurno = configData ?? CONFIG_TURNO_CAJA_DEFAULT;
+    cierreXHechoHoy = !!cierresX;
+    nombreEmpleado = perfilInfo?.nombre ?? "Vos";
+    botonCierreTipo = botonCierreParaAhora(configTurno, cierreXHechoHoy);
   }
 
   return (
@@ -91,6 +112,14 @@ export default async function CajaPage({
           )}
           {botonCierreTipo && sucursalId && (
             <BotonCierreTurno sucursalId={sucursalId} tipo={botonCierreTipo} />
+          )}
+          {sucursalId && (
+            <Link
+              href={`/admin/caja/arqueo?sucursal=${sucursalId}`}
+              className="flex items-center gap-1.5 rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Arqueo de caja
+            </Link>
           )}
           <Link
             href={`/admin/caja/vender${sucursalId ? `?sucursal=${sucursalId}` : ""}`}
@@ -131,6 +160,15 @@ export default async function CajaPage({
             <MovimientosList movimientos={movimientos ?? []} />
           </div>
         </>
+      )}
+
+      {!esSuperadmin && sucursalId && (
+        <AvisoCierreProximo
+          sucursalId={sucursalId}
+          nombreEmpleado={nombreEmpleado}
+          config={configTurno}
+          cierreXHechoHoy={cierreXHechoHoy}
+        />
       )}
     </div>
   );

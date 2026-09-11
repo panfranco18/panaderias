@@ -3,9 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRolEnSucursal } from "@/lib/auth/current-perfil";
-import { notificarVenta, notificarFaltante, notificarCierreTurno } from "@/lib/notificaciones";
+import {
+  notificarVenta,
+  notificarFaltante,
+  notificarCierreTurno,
+  notificarCierreDemorado,
+} from "@/lib/notificaciones";
 import { calcularEstadoCaja } from "@/lib/estado-caja";
 import { hoyISO } from "@/lib/fecha-ar";
+import { CONFIG_TURNO_CAJA_DEFAULT } from "@/lib/turno-caja";
 
 export type ActionState = { error?: string; ok?: boolean };
 
@@ -116,6 +122,13 @@ export async function registrarCierreTurno(
 
   const estado = await calcularEstadoCaja(supabase, sucursalId, hoyISO());
 
+  await supabase.from("cierres_turno").insert({
+    sucursal_id: sucursalId,
+    tipo,
+    fecha: hoyISO(),
+    perfil_id: auth.perfil.id,
+  });
+
   await notificarCierreTurno(supabase, {
     tipo,
     sucursalId,
@@ -124,6 +137,33 @@ export async function registrarCierreTurno(
     hora: new Date().toISOString(),
     totalVentas: estado.totalVentas,
     saldo: estado.saldo,
+  });
+
+  revalidatePath("/admin/caja");
+  return { ok: true };
+}
+
+export async function avisarCierreDemorado(sucursalId: string): Promise<ActionState> {
+  const auth = await requireRolEnSucursal([...STAFF], sucursalId);
+  if ("error" in auth) return auth;
+
+  const supabase = createAdminClient();
+
+  const [{ data: sucursal }, { data: usuario }, { data: config }] = await Promise.all([
+    supabase.from("sucursales").select("nombre").eq("id", sucursalId).maybeSingle(),
+    supabase.from("perfiles").select("nombre").eq("id", auth.perfil.id).maybeSingle(),
+    supabase
+      .from("config_turnos_caja")
+      .select("turno_manana_fin")
+      .eq("sucursal_id", sucursalId)
+      .maybeSingle(),
+  ]);
+
+  await notificarCierreDemorado(supabase, {
+    sucursalId,
+    sucursalNombre: sucursal?.nombre ?? "",
+    nombreEmpleado: usuario?.nombre ?? "Alguien",
+    horaFinTurno: config?.turno_manana_fin ?? CONFIG_TURNO_CAJA_DEFAULT.turno_manana_fin,
   });
 
   return { ok: true };
