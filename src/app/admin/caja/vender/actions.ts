@@ -19,6 +19,7 @@ export type ItemCarrito = {
 
 export type VentaCreada = {
   id: string;
+  numeroTicket: number | null;
   fecha: string;
   total: number;
   metodoPago: string | null;
@@ -134,6 +135,7 @@ export async function crearVenta(input: {
     ok: true,
     venta: {
       id: venta.id,
+      numeroTicket: venta.numero_ticket ?? null,
       fecha: venta.fecha,
       total,
       metodoPago: input.metodoPago || null,

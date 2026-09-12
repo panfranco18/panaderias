@@ -46,6 +46,50 @@ export async function guardarConfiguracion(
   return { ok: true };
 }
 
+export async function guardarDatosFiscales(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const auth = await requireRol(["superadmin"]);
+  if ("error" in auth) return auth;
+
+  const razonSocial = String(formData.get("razon_social") || "").trim() || null;
+  const cuit = String(formData.get("cuit") || "").trim() || null;
+  const condicionIva = String(formData.get("condicion_iva") || "").trim() || null;
+  const ingresosBrutos = String(formData.get("ingresos_brutos") || "").trim() || null;
+  const inicioActividades = String(formData.get("inicio_actividades") || "").trim() || null;
+
+  const supabase = createAdminClient();
+
+  const { data: existente } = await supabase
+    .from("configuracion_negocio")
+    .select("id")
+    .limit(1)
+    .maybeSingle();
+
+  const payload = {
+    razon_social: razonSocial,
+    cuit,
+    condicion_iva: condicionIva,
+    ingresos_brutos: ingresosBrutos,
+    inicio_actividades: inicioActividades,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = existente
+    ? await supabase
+        .from("configuracion_negocio")
+        .update(payload)
+        .eq("id", existente.id)
+    : await supabase.from("configuracion_negocio").insert(payload);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/configuracion");
+  revalidatePath("/admin/facturacion");
+  return { ok: true };
+}
+
 export async function actualizarMiCuenta(
   _prevState: ActionState,
   formData: FormData

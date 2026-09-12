@@ -18,6 +18,7 @@ type Sucursal = {
   activa: boolean;
   horario_atencion?: string | null;
   costo_envio?: number;
+  punto_venta?: string | null;
 };
 
 type Empleado = {
@@ -102,6 +103,9 @@ function SucursalCard({
               Envío: ${Number(sucursal.costo_envio).toFixed(2)}
             </p>
           )}
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+            Punto de venta: {sucursal.punto_venta || "0001"}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -175,6 +179,18 @@ function SucursalCard({
                 className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
               />
             </div>
+          </div>
+          <div className="mt-3 max-w-[10rem]">
+            <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              Punto de venta (para facturas/remitos)
+            </label>
+            <input
+              name="punto_venta"
+              defaultValue={sucursal.punto_venta ?? "0001"}
+              maxLength={4}
+              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              placeholder="0001"
+            />
           </div>
           <label className="mt-3 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
             <input

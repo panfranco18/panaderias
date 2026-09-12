@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPerfilActual } from "@/lib/auth/current-perfil";
 import { ConfiguracionForm } from "./configuracion-form";
+import { DatosFiscalesForm } from "./datos-fiscales-form";
 import { MiCuentaForm } from "./mi-cuenta-form";
 
 export default async function ConfiguracionPage() {
@@ -20,7 +21,8 @@ export default async function ConfiguracionPage() {
         Configuración
       </h1>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-        Datos de pago que ve el cliente al elegir MercadoPago en el checkout.
+        Tu cuenta, los datos fiscales del negocio y los datos de pago que ve
+        el cliente al elegir MercadoPago en el checkout.
       </p>
 
       {error && (
@@ -31,6 +33,7 @@ export default async function ConfiguracionPage() {
 
       <div className="mt-6 flex max-w-md flex-col gap-6">
         <MiCuentaForm nombre={miPerfil?.nombre ?? ""} />
+        <DatosFiscalesForm config={config} />
         <ConfiguracionForm config={config} />
       </div>
     </div>

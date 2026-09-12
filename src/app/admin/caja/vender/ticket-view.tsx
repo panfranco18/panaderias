@@ -62,6 +62,9 @@ export function TicketView({
         <p className="mt-1 text-center">
           {formatFechaHoraAR(venta.fecha)}
         </p>
+        {venta.numeroTicket != null && (
+          <p className="text-center">Ticket N° {venta.numeroTicket}</p>
+        )}
         <div className="my-2 border-t border-dashed border-zinc-400" />
 
         {modo === "ticket" ? (
