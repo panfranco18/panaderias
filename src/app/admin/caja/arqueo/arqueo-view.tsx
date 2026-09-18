@@ -167,11 +167,11 @@ export function ArqueoView({
             <p className="font-semibold">Ventas</p>
             <ul className="mt-1 flex flex-col gap-0.5">
               <li className="flex justify-between">
-                <span className="text-zinc-600 dark:text-zinc-400">Ventas en negro (Venta 1)</span>
+                <span className="text-zinc-600 dark:text-zinc-400">Ventas 1</span>
                 <span>${comparacion.ventas.negro.toFixed(2)}</span>
               </li>
               <li className="flex justify-between">
-                <span className="text-zinc-600 dark:text-zinc-400">Ventas registradas (Venta Deleite)</span>
+                <span className="text-zinc-600 dark:text-zinc-400">Ventas Deleite</span>
                 <span>${comparacion.ventas.registradas.toFixed(2)}</span>
               </li>
               {comparacion.ventas.sinClasificar > 0 && (
