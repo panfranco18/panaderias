@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { rangoDiaAR } from "@/lib/fecha-ar";
+import { rangoDiaAR, rangoFechasAR, fechaLocalAR } from "@/lib/fecha-ar";
 
 type Supabase = ReturnType<typeof createAdminClient>;
 
@@ -114,4 +114,162 @@ export async function calcularEstadoCaja(
   }
 
   return { formasPago, totalVentas, totales, saldo, gastos, depositosDelDia, personalEnTurno, ventasTarde };
+}
+
+export type DiaCaja = {
+  fecha: string;
+  ventaNegro: number;
+  ventaRegistrada: number;
+  ventaSinClasificar: number;
+  totalVentas: number;
+  apertura: number;
+  ingresos: number;
+  egresos: number;
+  depositos: number;
+  cierre: number;
+  saldo: number;
+};
+
+export type EstadoCajaRango = {
+  formasPago: FormaPago[];
+  totalVentas: number;
+  ventaNegro: number;
+  ventaRegistrada: number;
+  ventaSinClasificar: number;
+  totales: { apertura: number; ingresos: number; egresos: number; cierre: number; depositos: number };
+  saldo: number;
+  gastos: Gasto[];
+  depositosDelDia: Gasto[];
+  porDia: DiaCaja[];
+};
+
+// Mismo cálculo que calcularEstadoCaja, pero para un rango de uno o
+// varios días (para que el superadmin pueda consultar cajas anteriores).
+// Cuando el rango cubre más de un día, además devuelve el desglose
+// día por día en `porDia`.
+export async function calcularEstadoCajaRango(
+  supabase: Supabase,
+  sucursalId: string,
+  fechaDesde: string,
+  fechaHasta: string
+): Promise<EstadoCajaRango> {
+  const { inicio, fin } = rangoFechasAR(fechaDesde, fechaHasta);
+
+  const [{ data: ventas }, { data: movimientos }] = await Promise.all([
+    supabase
+      .from("ventas")
+      .select("id, total, metodo_pago, venta_tipo, fecha")
+      .eq("sucursal_id", sucursalId)
+      .gte("fecha", inicio)
+      .lt("fecha", fin),
+    supabase
+      .from("caja_movimientos")
+      .select("tipo, monto, descripcion, fecha")
+      .eq("sucursal_id", sucursalId)
+      .gte("fecha", inicio)
+      .lt("fecha", fin)
+      .order("fecha", { ascending: true }),
+  ]);
+
+  const formasPagoMap = new Map<string, number>();
+  let ventaNegro = 0;
+  let ventaRegistrada = 0;
+  let ventaSinClasificar = 0;
+
+  const porDiaMap = new Map<string, DiaCaja>();
+  function diaDe(fecha: string): DiaCaja {
+    const clave = fechaLocalAR(fecha);
+    let dia = porDiaMap.get(clave);
+    if (!dia) {
+      dia = {
+        fecha: clave,
+        ventaNegro: 0,
+        ventaRegistrada: 0,
+        ventaSinClasificar: 0,
+        totalVentas: 0,
+        apertura: 0,
+        ingresos: 0,
+        egresos: 0,
+        depositos: 0,
+        cierre: 0,
+        saldo: 0,
+      };
+      porDiaMap.set(clave, dia);
+    }
+    return dia;
+  }
+
+  for (const v of ventas ?? []) {
+    const key = v.metodo_pago ?? "sin_especificar";
+    const monto = Number(v.total);
+    formasPagoMap.set(key, (formasPagoMap.get(key) ?? 0) + monto);
+
+    const dia = diaDe(v.fecha);
+    dia.totalVentas += monto;
+    if (v.venta_tipo === "venta_1") {
+      ventaNegro += monto;
+      dia.ventaNegro += monto;
+    } else if (v.venta_tipo === "venta_deleite") {
+      ventaRegistrada += monto;
+      dia.ventaRegistrada += monto;
+    } else {
+      ventaSinClasificar += monto;
+      dia.ventaSinClasificar += monto;
+    }
+  }
+
+  const formasPago = Array.from(formasPagoMap.entries())
+    .map(([metodo, monto]) => ({ metodo: metodo === "sin_especificar" ? null : metodo, monto }))
+    .sort((a, b) => b.monto - a.monto);
+  const totalVentas = ventaNegro + ventaRegistrada + ventaSinClasificar;
+
+  const totales = (movimientos ?? []).reduce(
+    (acc, m) => {
+      const monto = Number(m.monto);
+      const dia = diaDe(m.fecha);
+      if (m.tipo === "apertura") {
+        acc.apertura += monto;
+        dia.apertura += monto;
+      }
+      if (m.tipo === "ingreso") {
+        acc.ingresos += monto;
+        dia.ingresos += monto;
+      }
+      if (m.tipo === "egreso") {
+        acc.egresos += monto;
+        dia.egresos += monto;
+      }
+      if (m.tipo === "cierre") {
+        acc.cierre += monto;
+        dia.cierre += monto;
+      }
+      if (m.tipo === "deposito") {
+        acc.depositos += monto;
+        dia.depositos += monto;
+      }
+      return acc;
+    },
+    { apertura: 0, ingresos: 0, egresos: 0, cierre: 0, depositos: 0 }
+  );
+  const saldo = totales.apertura + totales.ingresos - totales.egresos - totales.depositos;
+
+  const gastos = (movimientos ?? []).filter((m) => m.tipo === "egreso");
+  const depositosDelDia = (movimientos ?? []).filter((m) => m.tipo === "deposito");
+
+  const porDia = Array.from(porDiaMap.values())
+    .map((d) => ({ ...d, saldo: d.apertura + d.ingresos - d.egresos - d.depositos }))
+    .sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0));
+
+  return {
+    formasPago,
+    totalVentas,
+    ventaNegro,
+    ventaRegistrada,
+    ventaSinClasificar,
+    totales,
+    saldo,
+    gastos,
+    depositosDelDia,
+    porDia,
+  };
 }

@@ -21,6 +21,19 @@ export function rangoDiaAR(fechaYMD: string) {
   return { inicio: inicio.toISOString(), fin: fin.toISOString() };
 }
 
+// Rango [inicio, fin) que cubre varios días calendario argentinos
+// completos, de `desdeYMD` a `hastaYMD` inclusive.
+export function rangoFechasAR(desdeYMD: string, hastaYMD: string) {
+  const inicio = rangoDiaAR(desdeYMD).inicio;
+  const fin = rangoDiaAR(hastaYMD).fin;
+  return { inicio, fin };
+}
+
+// A qué día calendario argentino (YYYY-MM-DD) corresponde un timestamp.
+export function fechaLocalAR(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-CA", { timeZone: TIMEZONE_AR });
+}
+
 export function formatHoraAR(iso: string) {
   return new Date(iso).toLocaleTimeString("es-AR", {
     hour: "2-digit",

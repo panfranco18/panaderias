@@ -112,6 +112,14 @@ export default async function CajaPage({
               Cierre de caja
             </Link>
           )}
+          {esSuperadmin && (
+            <Link
+              href={`/admin/caja/historial${sucursalId ? `?sucursal=${sucursalId}` : ""}`}
+              className="flex items-center gap-1.5 rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Historial de cajas
+            </Link>
+          )}
           {botonCierreTipo && sucursalId && (
             <BotonCierreTurno sucursalId={sucursalId} tipo={botonCierreTipo} />
           )}
